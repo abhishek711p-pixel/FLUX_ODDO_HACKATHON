@@ -49,6 +49,8 @@ export default function FitText({ children, className = '', min = 14, title }) {
       apply();
     };
     fit();
+    // Web fonts load after the first paint: fit again once they are ready
+    document.fonts?.ready.then(fit);
     const ro = new ResizeObserver(fit);
     ro.observe(el.parentElement || el);
     return () => { ro.disconnect(); group?.report(id, null); };
