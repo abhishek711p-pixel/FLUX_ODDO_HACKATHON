@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { NAV_ITEMS } from '../config/nav.js';
 import { ROLE_LABELS } from '../utils/format.js';
 import Icon from './Icon.jsx';
+import { CrumbProvider, useCrumbValue } from '../context/CrumbContext.jsx';
 
 export function Logo({ light = false }) {
   return (
@@ -19,7 +20,45 @@ export function Logo({ light = false }) {
   );
 }
 
+// Top bar breadcrumb: section from the menu, then the page or record (e.g. Invoices › INV/2026/18780)
+function Breadcrumb({ items }) {
+  const { pathname } = useLocation();
+  const record = useCrumbValue();
+  const section = items
+    .filter((i) => (i.to === '/' ? pathname === '/' : pathname === i.to || pathname.startsWith(`${i.to}/`)))
+    .sort((a, b) => b.to.length - a.to.length)[0];
+  const parts = pathname.split('/').filter(Boolean);
+  let page = '';
+  if (parts[1] === 'new') page = 'New';
+  else if (parts[2] === 'edit') page = record ? `Edit ${record}` : 'Edit';
+  else if (parts[1]) page = record || 'Details';
+  const title = section ? section.label : 'SubFlow';
+  return (
+    <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-sm">
+      {page && section ? (
+        <Link to={section.to} className="shrink-0 text-slate-500 transition hover:text-brand-700">{title}</Link>
+      ) : (
+        <span className="truncate font-semibold text-ink">{title}</span>
+      )}
+      {page && (
+        <>
+          <span className="text-slate-300">›</span>
+          <span className="truncate font-semibold text-ink">{page}</span>
+        </>
+      )}
+    </nav>
+  );
+}
+
 export default function Layout() {
+  return (
+    <CrumbProvider>
+      <LayoutFrame />
+    </CrumbProvider>
+  );
+}
+
+function LayoutFrame() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false); // mobile: slide-in menu
@@ -92,13 +131,14 @@ export default function Layout() {
 
       <div className={`flex min-w-0 flex-1 flex-col transition-[padding] duration-300 ${desktopOpen ? 'lg:pl-60' : 'lg:pl-0'}`}>
         <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur lg:px-8">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button type="button" onClick={toggleMenu}
               className="rounded-[10px] p-2 text-slate-600 transition hover:bg-brand-50 hover:text-brand-700"
               aria-label={desktopOpen ? 'Hide menu' : 'Show menu'} title={desktopOpen ? 'Hide menu' : 'Show menu'}>
               <Icon name="menu" />
             </button>
-            {!desktopOpen && <span className="hidden lg:block"><Logo /></span>}
+            {!desktopOpen && <span className="hidden border-r border-slate-200 pr-4 lg:block"><Logo /></span>}
+            <Breadcrumb items={items} />
           </div>
           <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
             {ROLE_LABELS[user.role]}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useCrumb } from '../context/CrumbContext.jsx';
 import api, { errorMessage } from '../api/client.js';
 import InvoiceDocument from '../components/InvoiceDocument.jsx';
 import Icon from '../components/Icon.jsx';
@@ -12,6 +13,7 @@ import { formatDate, formatINR, INVOICE_STATUS } from '../utils/format.js';
 export default function InvoiceDetail() {
   const { id } = useParams();
   const [inv, setInv] = useState(null);
+  useCrumb(inv?.number);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState('');

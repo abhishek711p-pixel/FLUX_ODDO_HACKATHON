@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useCrumb } from '../context/CrumbContext.jsx';
 import api, { errorMessage } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import StatusStepper from '../components/StatusStepper.jsx';
@@ -24,6 +25,7 @@ export default function SubscriptionDetail() {
   const { user } = useAuth();
   const internal = user.role !== 'customer';
   const [sub, setSub] = useState(null);
+  useCrumb(sub?.number);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState('');
