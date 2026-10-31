@@ -1,0 +1,27 @@
+{
+  "name": "subflow-server",
+  "version": "1.0.0",
+  "description": "SubFlow subscription management API (Express + PostgreSQL)",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "db:setup": "node db/setup.js",
+    "db:demo": "node db/demo.js",
+    "db:fresh": "node db/setup.js && node db/demo.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^10.3.1",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  }
+}
