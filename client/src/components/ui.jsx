@@ -1,6 +1,7 @@
 // Shared UI building blocks used by every page
 import { useEffect } from 'react';
 import Icon from './Icon.jsx';
+import Select from './Select.jsx';
 
 export function PageHeader({ title, subtitle, actions }) {
   return (
@@ -29,7 +30,7 @@ export function Field({ label, error, hint, id, className = '', ...props }) {
   return (
     <div className={className}>
       {label && <label className="label" htmlFor={id}>{label}</label>}
-      <input id={id} className={`input ${error ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : ''}`} {...props} />
+      <input id={id} className={`input ${error ? 'border-red-400 focus:border-red-500 focus:ring-red-500/15' : ''}`} {...props} />
       {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
     </div>
   );
@@ -39,7 +40,7 @@ export function SelectField({ label, error, id, children, className = '', ...pro
   return (
     <div className={className}>
       {label && <label className="label" htmlFor={id}>{label}</label>}
-      <select id={id} className={`input ${error ? 'border-red-400' : ''}`} {...props}>{children}</select>
+      <Select id={id} className={`input ${error ? 'border-red-400' : ''}`} {...props}>{children}</Select>
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );

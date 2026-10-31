@@ -13,8 +13,24 @@
   --color-ink: #16201f;
 }
 
+/* Always use the light look for native browser parts (date pickers, scrollbars, checkboxes),
+   even when the computer is in dark mode */
+:root {
+  color-scheme: light;
+  accent-color: var(--color-brand-600);
+}
+
 body {
   @apply bg-slate-50 text-ink antialiased;
+}
+
+/* Keyboard focus ring in the brand colour instead of the browser's blue */
+a:focus-visible, button:focus-visible, [role='tab']:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+a:focus:not(:focus-visible), button:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* Reusable component classes (Tailwind v4 custom utilities) */
@@ -31,13 +47,25 @@ body {
 @utility btn-danger {
   @apply btn bg-red-600 text-white hover:bg-red-700;
 }
+@utility field {
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-ink outline-none transition
+    placeholder:text-slate-400 hover:border-slate-400;
+}
+/* Text inputs: highlight while typing */
 @utility input {
-  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition
-    placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100;
+  @apply field focus:border-brand-500 focus:ring-3 focus:ring-brand-500/15;
+}
+/* Dropdown button: highlight only for keyboard focus or while open, not after a mouse pick */
+@utility select-btn {
+  @apply field cursor-pointer focus-visible:border-brand-500 focus-visible:ring-3 focus-visible:ring-brand-500/15;
 }
 @utility label {
   @apply mb-1 block text-sm font-medium text-slate-700;
 }
 @utility card {
   @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+}
+/* Clickable card: same border everywhere, lifts slightly on hover */
+@utility card-link {
+  @apply card cursor-pointer transition hover:-translate-y-px hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500;
 }
