@@ -8,6 +8,7 @@ import { formatDate, formatINR, SUB_STATUS, todayISO } from '../utils/format.js'
 import Select from '../components/Select.jsx';
 import Icon from '../components/Icon.jsx';
 import FitText, { FitGroup } from '../components/FitText.jsx';
+import { AreaLine, Donut, ShareBars } from '../components/Charts.jsx';
 
 // Date presets for the filter
 function rangeFor(preset) {
@@ -198,17 +199,36 @@ export default function FinanceDashboard() {
             </div>
 
             <div className="card p-5">
-              <h2 className="mb-4 font-semibold">Subscriptions by status</h2>
-              <div className="space-y-2.5">
-                {Object.entries(data.subscriptionsByStatus).map(([status, n]) => (
-                  <Link key={status} to="/subscriptions" className="block">
-                    <div className="mb-1 flex justify-between text-sm"><span>{SUB_STATUS[status].label}</span><span className="font-medium">{n.toLocaleString('en-IN')}</span></div>
-                    <div className="h-2 rounded-full bg-slate-100">
-                      <div className="h-2 rounded-full bg-brand-600" style={{ width: `${statusTotal ? (n / statusTotal) * 100 : 0}%` }} />
-                    </div>
-                  </Link>
-                ))}
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-semibold">Subscriptions by status</h2>
+                <Link to="/subscriptions" className="text-sm font-medium text-brand-700 hover:underline">View</Link>
               </div>
+              <Donut centerValue={statusTotal.toLocaleString('en-IN')} centerLabel="Total"
+                segments={['active', 'paused', 'quotation', 'confirmed', 'draft', 'closed'].map((st, i) => ({
+                  label: SUB_STATUS[st].label, value: data.subscriptionsByStatus[st] || 0,
+                  color: ['#2F6B3F', '#C9A227', '#7FA672', '#4F7FA8', '#B7CDA9', '#94A3B8'][i],
+                }))} />
+            </div>
+
+            <div className="card p-5">
+              <h2 className="mb-1 font-semibold">New subscriptions</h2>
+              <p className="mb-3 text-xs text-slate-500">Created per month, last 6 months</p>
+              <AreaLine points={data.revenueByMonth.map((r) => ({ label: monthLabel(r.month), value: r.newSubscriptions }))} />
+            </div>
+
+            <div className="card p-5">
+              <h2 className="mb-1 font-semibold">Payments by method</h2>
+              <p className="mb-3 text-xs text-slate-500">Money collected in this period</p>
+              {data.paymentsByMethod.length === 0 ? <p className="py-8 text-center text-sm text-slate-400">No payments in this period.</p> : (
+                <Donut money centerValue={compactINR(data.revenue)} centerLabel="Collected" size={150}
+                  segments={data.paymentsByMethod.map((m) => ({ label: `${METHOD_LABELS[m.method]} (${m.count})`, value: m.amount }))} />
+              )}
+            </div>
+
+            <div className="card p-5">
+              <h2 className="mb-1 font-semibold">Revenue by plan</h2>
+              <p className="mb-4 text-xs text-slate-500">Monthly recurring revenue of active subscriptions</p>
+              <ShareBars suffix=" /mo" rows={data.topPlans.map((p) => ({ label: p.name, sub: `${p.active.toLocaleString('en-IN')} active`, value: p.mrr }))} />
             </div>
 
             <div className="card overflow-hidden xl:col-span-2">
@@ -266,16 +286,7 @@ export default function FinanceDashboard() {
             </div>
 
             <div className="card p-5">
-              <h2 className="mb-3 font-semibold">Top plans by monthly revenue</h2>
-              <div className="space-y-3">
-                {data.topPlans.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between text-sm">
-                    <div><div className="font-medium">{p.name}</div><div className="text-xs text-slate-500">{p.active} active</div></div>
-                    <div className="font-medium">{formatINR(p.mrr)}<span className="text-xs text-slate-500"> /mo</span></div>
-                  </div>
-                ))}
-              </div>
-              <h2 className="mb-3 mt-6 font-semibold">Latest payments</h2>
+              <h2 className="mb-3 font-semibold">Latest payments</h2>
               {data.recentPayments.length === 0 ? <p className="text-sm text-slate-400">No payments in this period.</p> : (
                 <div className="space-y-2.5">
                   {data.recentPayments.map((p) => (

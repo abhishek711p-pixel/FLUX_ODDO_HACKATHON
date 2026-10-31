@@ -7,7 +7,7 @@ import { round2, todayISO } from '../utils/periods.js';
 // Finance dashboard: one place for active subscriptions, revenue, payments and overdue invoices.
 // Every number is a single aggregate SQL query over indexed columns, so it stays fast with thousands of rows.
 const router = Router();
-router.use(requireAuth, requireRole('admin', 'staff'));
+router.use(requireAuth);
 
 // ['2026-05', ..., '2026-10'] ending with the month of `date`
 function lastSixMonths(date) {
@@ -29,6 +29,7 @@ const SUB_VALUE = `(p.price * s.quantity + COALESCE((SELECT SUM(sl.quantity * sl
 // "Right now" numbers (active, MRR, outstanding, overdue) are always as of today, optionally for one plan.
 router.get(
   '/summary',
+  requireRole('admin', 'staff'),
   asyncHandler(async (req, res) => {
     const today = todayISO();
     const to = isDate(req.query.to) ? req.query.to : today;
@@ -40,7 +41,7 @@ router.get(
     const params = [today, from, to, planId];
     const planSub = '($4::int IS NULL OR s.plan_id = $4)';
 
-    const [subs, money, period, months, plans, overdue, aging, recent] = await Promise.all([
+    const [subs, money, period, months, plans, overdue, aging, recent, methods] = await Promise.all([
       // Subscriptions right now
       query(
         `SELECT s.status, COUNT(*) AS n,
@@ -92,6 +93,11 @@ router.get(
          SELECT 'collected', to_char(date_trunc('month', pay.payment_date), 'YYYY-MM'), SUM(pay.amount)
          FROM payments pay JOIN invoices i ON i.id = pay.invoice_id JOIN subscriptions s ON s.id = i.subscription_id, r
          WHERE pay.payment_date >= r.start AND pay.payment_date < r.stop AND ${planSub}
+         GROUP BY 2
+         UNION ALL
+         SELECT 'subs', to_char(date_trunc('month', s.created_at), 'YYYY-MM'), COUNT(*)
+         FROM subscriptions s, r
+         WHERE s.created_at >= r.start AND s.created_at < r.stop AND ${planSub}
          GROUP BY 2`,
         params
       ),
@@ -132,6 +138,14 @@ router.get(
          ORDER BY pay.payment_date DESC, pay.id DESC LIMIT 6`,
         params
       ),
+      // Money collected in the period, by payment method
+      query(
+        `SELECT pay.method, SUM(pay.amount) AS amount, COUNT(*) AS n
+         FROM payments pay JOIN invoices i ON i.id = pay.invoice_id JOIN subscriptions s ON s.id = i.subscription_id
+         WHERE pay.payment_date BETWEEN $2 AND $3 AND ${planSub} AND $1::date IS NOT NULL
+         GROUP BY pay.method ORDER BY 2 DESC`,
+        params
+      ),
     ]);
 
     const byStatus = { draft: 0, quotation: 0, confirmed: 0, active: 0, paused: 0, closed: 0 };
@@ -167,10 +181,52 @@ router.get(
         month,
         invoiced: Number(months.rows.find((r) => r.kind === 'invoiced' && r.month === month)?.amount || 0),
         collected: Number(months.rows.find((r) => r.kind === 'collected' && r.month === month)?.amount || 0),
+        newSubscriptions: Number(months.rows.find((r) => r.kind === 'subs' && r.month === month)?.amount || 0),
       })),
+      paymentsByMethod: methods.rows.map((r) => ({ method: r.method, amount: Number(r.amount), count: Number(r.n) })),
       topPlans: plans.rows.map((r) => ({ ...toCamel(r), mrr: round2(r.mrr) })),
       overdueInvoices: overdue.rows.map(toCamel),
       recentPayments: recent.rows.map(toCamel),
+    });
+  })
+);
+
+// GET /api/reports/mine   A customer's own billing picture: last 6 months billed vs paid, and spend by plan.
+// Always scoped to the logged-in user, so nobody can see another customer's numbers.
+router.get(
+  '/mine',
+  asyncHandler(async (req, res) => {
+    const today = todayISO();
+    const me = req.user.id;
+    const [months, byPlan] = await Promise.all([
+      query(
+        `WITH r AS (SELECT (date_trunc('month', $1::date) - interval '5 months')::date AS start, (date_trunc('month', $1::date) + interval '1 month')::date AS stop)
+         SELECT 'billed' AS kind, to_char(date_trunc('month', i.invoice_date), 'YYYY-MM') AS month, SUM(i.total) AS amount
+         FROM invoices i, r
+         WHERE i.customer_id = $2 AND i.status IN ('confirmed', 'paid') AND i.invoice_date >= r.start AND i.invoice_date < r.stop
+         GROUP BY 2
+         UNION ALL
+         SELECT 'paid', to_char(date_trunc('month', pay.payment_date), 'YYYY-MM'), SUM(pay.amount)
+         FROM payments pay JOIN invoices i ON i.id = pay.invoice_id, r
+         WHERE i.customer_id = $2 AND pay.payment_date >= r.start AND pay.payment_date < r.stop
+         GROUP BY 2`,
+        [today, me]
+      ),
+      query(
+        `SELECT p.name AS plan_name, SUM(i.total) AS amount
+         FROM invoices i JOIN subscriptions s ON s.id = i.subscription_id JOIN plans p ON p.id = s.plan_id
+         WHERE i.customer_id = $1 AND i.status IN ('confirmed', 'paid')
+         GROUP BY p.name ORDER BY 2 DESC`,
+        [me]
+      ),
+    ]);
+    res.json({
+      byMonth: lastSixMonths(today).map((month) => ({
+        month,
+        billed: Number(months.rows.find((r) => r.kind === 'billed' && r.month === month)?.amount || 0),
+        paid: Number(months.rows.find((r) => r.kind === 'paid' && r.month === month)?.amount || 0),
+      })),
+      byPlan: byPlan.rows.map((r) => ({ planName: r.plan_name, amount: Number(r.amount) })),
     });
   })
 );

@@ -5,18 +5,23 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { Alert, Badge } from '../components/ui.jsx';
 import { formatDate, formatINR, INVOICE_STATUS, PER_PERIOD, SUB_STATUS } from '../utils/format.js';
 import FitText, { FitGroup } from '../components/FitText.jsx';
+import { compactINR, Donut, PairBars } from '../components/Charts.jsx';
+
+const monthLabel = (ym) => new Date(`${ym}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
 
 // Customer portal home: their plans, what they owe, and what is coming next
 export default function CustomerDashboard() {
   const { user } = useAuth();
   const [subs, setSubs] = useState(null);
   const [inv, setInv] = useState(null);
+  const [mine, setMine] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     Promise.all([api.get('/subscriptions', { params: { pageSize: 100 } }), api.get('/invoices', { params: { pageSize: 5 } })])
       .then(([s, i]) => { setSubs(s.data); setInv(i.data); })
       .catch((err) => setError(errorMessage(err)));
+    api.get('/reports/mine').then((r) => setMine(r.data)).catch(() => {});
   }, []);
 
   if (!subs || !inv) return <p className="py-16 text-center text-sm text-slate-400">{error || 'Loading…'}</p>;
@@ -49,6 +54,25 @@ export default function CustomerDashboard() {
         <div className="card p-4"><div className="text-xs font-medium uppercase tracking-wide text-slate-500">Overdue</div><FitText className="mt-1 text-2xl font-semibold text-red-600">{formatINR(inv.summary.overdueAmount)}</FitText><div className="text-xs text-slate-500">past the due date</div></div>
         <div className="card p-4"><div className="text-xs font-medium uppercase tracking-wide text-slate-500">Next bill</div><FitText className="mt-1 text-2xl font-semibold">{nextBill ? formatDate(nextBill.nextInvoiceDate) : '-'}</FitText><div className="text-xs text-slate-500">{nextBill ? `${nextBill.number} · about ${formatINR(nextBill.total)}` : 'No active plan'}</div></div>
       </div></FitGroup>
+
+      {mine && (
+        <div className="mb-5 grid gap-5 lg:grid-cols-3">
+          <div className="card p-5 lg:col-span-2">
+            <h2 className="mb-1 font-semibold">My billing</h2>
+            <p className="mb-4 text-xs text-slate-500">Billed vs paid, last 6 months</p>
+            <PairBars aLabel="Billed" bLabel="Paid" height={150}
+              groups={mine.byMonth.map((m) => ({ label: monthLabel(m.month), a: m.billed, b: m.paid }))} />
+          </div>
+          <div className="card p-5">
+            <h2 className="mb-1 font-semibold">Spend by plan</h2>
+            <p className="mb-4 text-xs text-slate-500">All confirmed and paid invoices</p>
+            {mine.byPlan.length === 0 ? <p className="py-8 text-center text-sm text-slate-400">No bills yet.</p> : (
+              <Donut money size={140} centerValue={compactINR(mine.byPlan.reduce((a, p) => a + p.amount, 0))} centerLabel="Total billed"
+                segments={mine.byPlan.map((p) => ({ label: p.planName, value: p.amount }))} />
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="card overflow-hidden">

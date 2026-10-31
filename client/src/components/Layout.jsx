@@ -8,11 +8,11 @@ import Icon from './Icon.jsx';
 export function Logo({ light = false }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white">
+      <div className={`flex h-9 w-9 items-center justify-center rounded-[10px] ${light ? 'bg-brand-600' : 'bg-brand-600'} text-white`}>
         <Icon name="loop" className="h-5 w-5" />
       </div>
       <div className="leading-tight">
-        <div className={`text-base font-semibold ${light ? 'text-white' : 'text-ink'}`}>SubFlow</div>
+        <div className={`font-display text-base font-bold ${light ? 'text-white' : 'text-brand-900'}`}>SubFlow</div>
         <div className={`text-xs ${light ? 'text-brand-200' : 'text-slate-500'}`}>Brightloop Billing</div>
       </div>
     </div>
@@ -39,8 +39,8 @@ export default function Layout() {
           end={item.to === '/'}
           onClick={() => setOpen(false)}
           className={({ isActive }) =>
-            `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-              isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-100 hover:text-ink'
+            `flex items-center gap-3 rounded-[10px] px-3 py-2 text-sm font-medium transition ${
+              isActive ? 'bg-brand-600 font-semibold text-white shadow-sm' : 'text-brand-900/75 hover:bg-brand-50 hover:text-brand-900'
             }`
           }
         >
@@ -66,7 +66,7 @@ export default function Layout() {
           </button>
         </div>
         {sidebar}
-        <div className="mx-3 mt-4 rounded-lg bg-slate-50 p-3">
+        <div className="mx-3 mt-4 rounded-[10px] border border-slate-200 bg-cloud p-3">
           <div className="truncate text-sm font-medium">{user.name}</div>
           <div className="truncate text-xs text-slate-500">{user.email}</div>
           <button onClick={handleLogout} className="mt-3 flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-red-600">
