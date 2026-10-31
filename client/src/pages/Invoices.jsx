@@ -21,7 +21,7 @@ export default function Invoices() {
   const { user } = useAuth();
   const internal = user.role !== 'customer';
   const navigate = useNavigate();
-  const [tab, setTab] = useState('');
+  const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get('tab') || '');
   const filters = tab === 'overdue' ? { overdue: 'true' } : tab ? { status: tab } : {};
   const list = usePagedList('/invoices', filters);
   const [selected, setSelected] = useState([]);

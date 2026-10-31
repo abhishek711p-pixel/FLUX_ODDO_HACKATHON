@@ -6,6 +6,7 @@ import { Alert, Badge } from '../components/ui.jsx';
 import { METHOD_LABELS } from '../components/RecordPayment.jsx';
 import { formatDate, formatINR, SUB_STATUS, todayISO } from '../utils/format.js';
 import Select from '../components/Select.jsx';
+import RunBilling from '../components/RunBilling.jsx';
 import Icon from '../components/Icon.jsx';
 import FitText, { FitGroup } from '../components/FitText.jsx';
 import { AreaLine, Donut, PairBars, ShareBars } from '../components/Charts.jsx';
@@ -137,6 +138,15 @@ export default function FinanceDashboard() {
         </div>
       </div>
 
+      {/* Quick actions: the daily jobs in one click */}
+      <div className="mb-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <Link to="/subscriptions/new" className="btn-primary"><Icon name="plus" className="h-4 w-4" /> New quotation</Link>
+        <RunBilling onDone={() => setReload((n) => n + 1)} />
+        <Link to="/invoices?tab=confirmed" className="btn-secondary"><Icon name="wallet" className="h-4 w-4" /> Record payment</Link>
+        <Link to="/invoices?tab=overdue" className="btn-secondary"><Icon name="bell" className="h-4 w-4" /> Chase overdue</Link>
+        <Link to="/customers" className="btn-secondary"><Icon name="users" className="h-4 w-4" /> Add customer</Link>
+      </div>
+
       <div className="mb-4"><Alert>{error}</Alert></div>
       {!data ? <p className="py-16 text-center text-sm text-slate-400">{loading ? 'Loading…' : ''}</p> : (
         <div className={loading ? 'opacity-60 transition' : 'transition'}>
@@ -256,6 +266,28 @@ export default function FinanceDashboard() {
               )}
             </div>
 
+            <div className="space-y-5">
+            <div className="card p-5">
+              <div className="mb-1 flex items-baseline justify-between gap-2">
+                <h2 className="font-semibold">Upcoming billing</h2>
+                <span className="text-xs text-slate-500">next 7 days</span>
+              </div>
+              <p className="mb-3 text-sm text-slate-500">
+                <span className="num font-semibold text-ink">{data.upcomingBilling.count.toLocaleString('en-IN')}</span> subscriptions,
+                about <span className="num font-semibold text-ink">{formatINR(data.upcomingBilling.amount)}</span> before GST
+              </p>
+              {data.upcomingBilling.items.length === 0 ? <p className="text-sm text-slate-400">Nothing due in the next 7 days.</p> : (
+                <div className="space-y-2.5">
+                  {data.upcomingBilling.items.map((u) => (
+                    <Link key={u.id} to={`/subscriptions/${u.id}`} className="flex items-center justify-between gap-2 text-sm hover:text-brand-700">
+                      <div className="min-w-0"><div className="truncate">{u.customerName}</div><div className="truncate text-xs text-slate-500">{formatDate(u.nextInvoiceDate)} · {u.planName} · {u.number}</div></div>
+                      <div className="num shrink-0 font-medium">{formatINR(u.amount)}</div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="card p-5">
               <h2 className="mb-3 font-semibold">Latest payments</h2>
               {data.recentPayments.length === 0 ? <p className="text-sm text-slate-400">No payments in this period.</p> : (
@@ -268,6 +300,7 @@ export default function FinanceDashboard() {
                   ))}
                 </div>
               )}
+            </div>
             </div>
           </div>
           <p className="mt-4 text-xs text-slate-400">

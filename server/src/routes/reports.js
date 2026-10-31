@@ -41,7 +41,7 @@ router.get(
     const params = [today, from, to, planId];
     const planSub = '($4::int IS NULL OR s.plan_id = $4)';
 
-    const [subs, money, period, months, plans, overdue, aging, recent, methods] = await Promise.all([
+    const [subs, money, period, months, plans, overdue, aging, recent, methods, upcoming] = await Promise.all([
       // Subscriptions right now
       query(
         `SELECT s.status, COUNT(*) AS n,
@@ -146,6 +146,18 @@ router.get(
          GROUP BY pay.method ORDER BY 2 DESC`,
         params
       ),
+      // Upcoming billing: active subscriptions due in the next 7 days (amount before GST)
+      query(
+        `SELECT s.id, s.number, c.name AS customer_name, p.name AS plan_name, s.next_invoice_date,
+                ROUND(${SUB_VALUE}, 2) AS amount,
+                COUNT(*) OVER () AS total_count, SUM(${SUB_VALUE}) OVER () AS total_amount
+         FROM subscriptions s JOIN plans p ON p.id = s.plan_id JOIN users c ON c.id = s.customer_id
+         WHERE s.status = 'active' AND s.next_invoice_date BETWEEN $1 AND $1::date + 7
+           AND (s.expiry_date IS NULL OR s.next_invoice_date <= s.expiry_date) AND ${planSub}
+           AND $2::date IS NOT NULL AND $3::date IS NOT NULL
+         ORDER BY s.next_invoice_date, s.id LIMIT 6`,
+        params
+      ),
     ]);
 
     const byStatus = { draft: 0, quotation: 0, confirmed: 0, active: 0, paused: 0, closed: 0 };
@@ -187,6 +199,11 @@ router.get(
       topPlans: plans.rows.map((r) => ({ ...toCamel(r), mrr: round2(r.mrr) })),
       overdueInvoices: overdue.rows.map(toCamel),
       recentPayments: recent.rows.map(toCamel),
+      upcomingBilling: {
+        count: Number(upcoming.rows[0]?.total_count || 0),
+        amount: round2(Number(upcoming.rows[0]?.total_amount || 0)),
+        items: upcoming.rows.map((r) => ({ id: r.id, number: r.number, customerName: r.customer_name, planName: r.plan_name, nextInvoiceDate: r.next_invoice_date, amount: Number(r.amount) })),
+      },
     });
   })
 );

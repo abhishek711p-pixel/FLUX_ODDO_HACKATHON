@@ -84,10 +84,13 @@ function LayoutFrame() {
   }
 
   const sidebar = (
-    <nav className="flex flex-1 flex-col gap-1 px-3">
-      {items.map((item) => (
+    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3">
+      {items.map((item, i) => (
+        <div key={`${item.to}-${item.label}`}>
+          {item.section && item.section !== items[i - 1]?.section && (
+            <div className="mb-1 mt-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{item.section}</div>
+          )}
         <NavLink
-          key={item.to}
           to={item.to}
           end={item.to === '/'}
           onClick={() => setOpen(false)}
@@ -100,6 +103,7 @@ function LayoutFrame() {
           <Icon name={item.icon} className="h-4.5 w-4.5" />
           {item.label}
         </NavLink>
+        </div>
       ))}
     </nav>
   );
