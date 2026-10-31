@@ -234,11 +234,11 @@ All endpoints live under `/api` and return JSON. Full list with request and resp
 
 See [TEAM.md](TEAM.md) for who owns which module. Demo walkthrough: [DEMO.md](DEMO.md).
 
-| Member | Module ownership |
-|---|---|
-| Himanshu Karmakar | Product and billing logic, finance dashboard, demo |
-| | Auth, roles, users and customers |
-| | Catalog (products, variants, plans, taxes, discounts) |
-| | Subscriptions, quotation templates, customer portal |
+   | Member | Module ownership |
+   |---|---|
+   | Abhishek Jain | Billing engine, invoices, payments, finance dashboard |
+   | Radhika | Auth, roles, users and customers |
+   | Kshiteesh Pandey | Subscriptions, quotation templates, customer portal |
+   | Vikash Kumar | Catalog (products, variants, plans, taxes, discounts) |
 
 Built for the Odoo × FLUX Lucknow Hackathon '26 hosted at PW Institute of Innovation.
