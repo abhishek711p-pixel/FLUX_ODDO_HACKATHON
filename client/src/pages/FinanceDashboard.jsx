@@ -8,7 +8,7 @@ import { formatDate, formatINR, SUB_STATUS, todayISO } from '../utils/format.js'
 import Select from '../components/Select.jsx';
 import Icon from '../components/Icon.jsx';
 import FitText, { FitGroup } from '../components/FitText.jsx';
-import { AreaLine, Donut, ShareBars } from '../components/Charts.jsx';
+import { AreaLine, Donut, PairBars, ShareBars } from '../components/Charts.jsx';
 
 // Date presets for the filter
 function rangeFor(preset) {
@@ -54,36 +54,6 @@ function Kpi({ label, value, hint, tone, to }) {
   return to ? <Link to={to} className="card-link block p-4">{body}</Link> : <div className="card p-4">{body}</div>;
 }
 
-// Invoiced vs collected, last 6 months (plain bars, no chart library)
-function RevenueChart({ data }) {
-  const max = Math.max(1, ...data.flatMap((d) => [d.invoiced, d.collected]));
-  return (
-    <div>
-      <div className="flex h-48 items-end gap-3">
-        {data.map((d) => (
-          <div key={d.month} className="flex h-full flex-1 flex-col justify-end">
-            <div className="flex h-full items-end justify-center gap-1">
-              <div className="w-1/2 max-w-6 rounded-t bg-brand-200" style={{ height: `${(d.invoiced / max) * 100}%` }} title={`Invoiced ${formatINR(d.invoiced)}`} />
-              <div className="w-1/2 max-w-6 rounded-t bg-brand-600" style={{ height: `${(d.collected / max) * 100}%` }} title={`Collected ${formatINR(d.collected)}`} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 flex gap-3 border-t border-slate-200 pt-2">
-        {data.map((d) => (
-          <div key={d.month} className="flex-1 text-center">
-            <div className="text-xs font-medium text-slate-600">{monthLabel(d.month)}</div>
-            <div className="text-[11px] text-slate-400">{compactINR(d.collected)}</div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 flex gap-4 text-xs text-slate-500">
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-brand-200" /> Invoiced</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-brand-600" /> Collected</span>
-      </div>
-    </div>
-  );
-}
 
 export default function FinanceDashboard() {
   const { user } = useAuth();
@@ -195,7 +165,8 @@ export default function FinanceDashboard() {
           <div className="grid gap-5 xl:grid-cols-3">
             <div className="card p-5 xl:col-span-2">
               <h2 className="mb-4 font-semibold">Invoiced vs collected <span className="text-sm font-normal text-slate-500">(last 6 months)</span></h2>
-              <RevenueChart data={data.revenueByMonth} />
+              <PairBars aLabel="Invoiced" bLabel="Collected" height={192} rateLabel="collected"
+                groups={data.revenueByMonth.map((r) => ({ label: monthLabel(r.month), a: r.invoiced, b: r.collected }))} />
             </div>
 
             <div className="card p-5">
