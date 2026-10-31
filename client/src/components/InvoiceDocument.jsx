@@ -9,7 +9,7 @@ export default function InvoiceDocument({ inv }) {
     <div className="bg-white">
       <div className="flex flex-col justify-between gap-6 sm:flex-row">
         <div>
-          <div className="text-xl font-semibold text-brand-700">{company.companyName}</div>
+          <div className="text-xl font-semibold text-brand-700">{company.companyName || 'SubFlow'}</div>
           <div className="mt-1 text-sm text-slate-500">Subscription billing{company.companyEmail ? ` · ${company.companyEmail}` : ''}</div>
         </div>
         <div className="sm:text-right">

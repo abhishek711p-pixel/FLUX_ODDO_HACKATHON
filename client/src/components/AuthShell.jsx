@@ -1,10 +1,8 @@
 import { Logo } from './Layout.jsx';
 import Icon from './Icon.jsx';
-import { useCompany } from '../hooks/useCompany.js';
 
 // Two-column frame shared by login, signup, forgot and reset password pages
 export default function AuthShell({ children }) {
-  const company = useCompany();
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="hidden flex-col justify-between bg-brand-900 p-12 text-white lg:flex">
@@ -22,7 +20,7 @@ export default function AuthShell({ children }) {
             ))}
           </ul>
         </div>
-        <p className="text-sm text-brand-200">{company.companyName} · Subscription billing</p>
+        <p className="text-sm text-brand-200">SubFlow · Subscription billing for any business</p>
       </div>
 
       <div className="flex items-center justify-center px-6 py-12">

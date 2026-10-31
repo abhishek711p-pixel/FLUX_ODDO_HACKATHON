@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { NAV_ITEMS } from '../config/nav.js';
 import { ROLE_LABELS } from '../utils/format.js';
 import Icon from './Icon.jsx';
-import { useCompany } from '../hooks/useCompany.js';
 
 export function Logo({ light = false }) {
   return (
@@ -23,8 +22,21 @@ export function Logo({ light = false }) {
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const company = useCompany();
+  const [open, setOpen] = useState(false); // mobile: slide-in menu
+  // Desktop: the hamburger shows or hides the sidebar. Remembered in this browser.
+  const [desktopOpen, setDesktopOpen] = useState(() => {
+    try { return localStorage.getItem('subflow_sidebar') !== 'closed'; } catch { return true; }
+  });
+  function toggleMenu() {
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      setDesktopOpen((v) => {
+        try { localStorage.setItem('subflow_sidebar', v ? 'closed' : 'open'); } catch { /* storage blocked: still works for this visit */ }
+        return !v;
+      });
+    } else {
+      setOpen((v) => !v);
+    }
+  }
   const items = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
 
   function handleLogout() {
@@ -57,9 +69,9 @@ export default function Layout() {
     <div className="flex min-h-screen">
       {/* Sidebar: fixed on desktop, slide-in on mobile */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-slate-200 bg-white py-5 transition-transform lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-slate-200 bg-white py-5 transition-transform duration-300 ${
           open ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        } ${desktopOpen ? 'lg:translate-x-0' : 'lg:-translate-x-full'}`}
       >
         <div className="mb-6 flex items-center justify-between px-5">
           <Logo />
@@ -78,12 +90,16 @@ export default function Layout() {
       </aside>
       {open && <div className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={() => setOpen(false)} />}
 
-      <div className="flex min-w-0 flex-1 flex-col lg:pl-60">
+      <div className={`flex min-w-0 flex-1 flex-col transition-[padding] duration-300 ${desktopOpen ? 'lg:pl-60' : 'lg:pl-0'}`}>
         <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur lg:px-8">
-          <button className="text-slate-600 lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
-            <Icon name="menu" />
-          </button>
-          <div className="hidden text-sm text-slate-500 lg:block">{company.companyName}</div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={toggleMenu}
+              className="rounded-[10px] p-2 text-slate-600 transition hover:bg-brand-50 hover:text-brand-700"
+              aria-label={desktopOpen ? 'Hide menu' : 'Show menu'} title={desktopOpen ? 'Hide menu' : 'Show menu'}>
+              <Icon name="menu" />
+            </button>
+            {!desktopOpen && <span className="hidden lg:block"><Logo /></span>}
+          </div>
           <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
             {ROLE_LABELS[user.role]}
           </span>

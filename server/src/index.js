@@ -34,7 +34,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Public: which business this installation belongs to (shown in the header, login page and invoices)
-app.get('/api/meta', (req, res) => res.json({ companyName: config.company.name, companyEmail: config.company.email }));
+app.get('/api/meta', (req, res) => res.json({ companyName: config.company.isSet ? config.company.name : '', companyEmail: config.company.email }));
 app.use('/api/auth', authRoutes);
 app.use('/api/taxes', taxRoutes);
 app.use('/api/products', productRoutes);

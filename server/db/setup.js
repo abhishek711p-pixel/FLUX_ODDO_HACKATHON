@@ -19,8 +19,8 @@ async function run() {
 
   console.log('Seeding demo users...');
   const users = [
-    { name: 'Aarav Admin', email: 'admin@subflow.app', password: 'Admin@1234', role: 'admin', company: process.env.COMPANY_NAME || 'Your Company Pvt. Ltd.' },
-    { name: 'Sneha Staff', email: 'staff@subflow.app', password: 'Staff@1234', role: 'staff', company: process.env.COMPANY_NAME || 'Your Company Pvt. Ltd.' },
+    { name: 'Aarav Admin', email: 'admin@subflow.app', password: 'Admin@1234', role: 'admin', company: process.env.COMPANY_NAME || 'SubFlow' },
+    { name: 'Sneha Staff', email: 'staff@subflow.app', password: 'Staff@1234', role: 'staff', company: process.env.COMPANY_NAME || 'SubFlow' },
     { name: 'Rohan Mehta', email: 'customer@subflow.app', password: 'Customer@1234', role: 'customer', company: 'Mehta Traders', phone: '9876543210' },
   ];
   for (const u of users) {

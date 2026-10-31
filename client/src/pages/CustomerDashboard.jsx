@@ -6,14 +6,12 @@ import { Alert, Badge } from '../components/ui.jsx';
 import { formatDate, formatINR, INVOICE_STATUS, PER_PERIOD, SUB_STATUS } from '../utils/format.js';
 import FitText, { FitGroup } from '../components/FitText.jsx';
 import { compactINR, Donut, PairBars } from '../components/Charts.jsx';
-import { useCompany } from '../hooks/useCompany.js';
 
 const monthLabel = (ym) => new Date(`${ym}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
 
 // Customer portal home: their plans, what they owe, and what is coming next
 export default function CustomerDashboard() {
   const { user } = useAuth();
-  const company = useCompany();
   const [subs, setSubs] = useState(null);
   const [inv, setInv] = useState(null);
   const [mine, setMine] = useState(null);
@@ -35,7 +33,7 @@ export default function CustomerDashboard() {
   return (
     <div className="mx-auto max-w-6xl">
       <h1 className="text-2xl font-semibold">Hello, {user.name.split(' ')[0]}</h1>
-      <p className="mt-1 text-sm text-slate-500">Your plans and bills with {company.companyName}, in one place.</p>
+      <p className="mt-1 text-sm text-slate-500">Your plans and bills, in one place.</p>
 
       <div className="my-5 space-y-2">
         <Alert>{error}</Alert>

@@ -4,7 +4,7 @@ import api from '../api/client.js';
 // The business using this installation (set on the server with COMPANY_NAME). Fetched once and shared.
 let cached = null;
 let pending = null;
-const FALLBACK = { companyName: 'Your Company', companyEmail: '' };
+const FALLBACK = { companyName: '', companyEmail: '' };
 
 export function useCompany() {
   const [company, setCompany] = useState(cached || FALLBACK);
