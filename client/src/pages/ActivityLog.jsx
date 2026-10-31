@@ -45,7 +45,24 @@ export default function ActivityLog() {
       </div>
       <div className="mb-4"><Alert>{list.error}</Alert></div>
 
-      <DataTable columns={columns} rows={list.rows} loading={list.loading} empty="No activity found" onRowClick={open} />
+      {/* Phones: stacked cards. Wider screens: table. */}
+      <div className="space-y-2 md:hidden">
+        {list.loading && <div className="card p-4 text-sm text-slate-500">Loading…</div>}
+        {!list.loading && !list.rows.length && <div className="card p-4 text-sm text-slate-500">No activity found</div>}
+        {!list.loading && list.rows.map((r) => (
+          <button key={r.id} type="button" onClick={() => open(r)} className="card block w-full p-4 text-left">
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <Badge color={ENTITY_COLORS[r.entity]}>{ENTITY_LABELS[r.entity] || r.entity}</Badge>
+              <span className="text-xs text-slate-500">{formatDateTime(r.createdAt)}</span>
+            </div>
+            <div className="text-sm text-ink">{r.summary}</div>
+            <div className="mt-1 text-xs text-slate-500">{actorName(r)}</div>
+          </button>
+        ))}
+      </div>
+      <div className="hidden md:block">
+        <DataTable columns={columns} rows={list.rows} loading={list.loading} empty="No activity found" onRowClick={open} />
+      </div>
       <Pagination page={list.page} pageSize={list.pageSize} total={list.total} onPage={list.setPage} />
     </div>
   );
