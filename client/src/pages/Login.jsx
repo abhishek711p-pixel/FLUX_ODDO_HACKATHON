@@ -7,9 +7,9 @@ import { Alert } from '../components/ui.jsx';
 
 // Quick-fill buttons for the demo (seeded accounts)
 const DEMO_ACCOUNTS = [
-  { role: 'Admin', email: 'admin@brightloop.in', password: 'Admin@1234' },
-  { role: 'Staff', email: 'staff@brightloop.in', password: 'Staff@1234' },
-  { role: 'Customer', email: 'customer@brightloop.in', password: 'Customer@1234' },
+  { role: 'Admin', email: 'admin@subflow.app', password: 'Admin@1234' },
+  { role: 'Staff', email: 'staff@subflow.app', password: 'Staff@1234' },
+  { role: 'Customer', email: 'customer@subflow.app', password: 'Customer@1234' },
 ];
 
 export default function Login() {

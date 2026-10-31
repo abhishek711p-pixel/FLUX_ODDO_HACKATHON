@@ -13,7 +13,7 @@ export default function InvoicePrint() {
     api.get(`/invoices/${id}`)
       .then((res) => {
         setInv(res.data);
-        document.title = `${res.data.number} · Brightloop Software`;
+        document.title = `${res.data.number} · Invoice`;
         setTimeout(() => window.print(), 400);
       })
       .catch((err) => setError(errorMessage(err)));

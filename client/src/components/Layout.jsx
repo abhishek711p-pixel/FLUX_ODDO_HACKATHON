@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { NAV_ITEMS } from '../config/nav.js';
 import { ROLE_LABELS } from '../utils/format.js';
 import Icon from './Icon.jsx';
+import { useCompany } from '../hooks/useCompany.js';
 
 export function Logo({ light = false }) {
   return (
@@ -13,7 +14,7 @@ export function Logo({ light = false }) {
       </div>
       <div className="leading-tight">
         <div className={`font-display text-base font-bold ${light ? 'text-white' : 'text-brand-900'}`}>SubFlow</div>
-        <div className={`text-xs ${light ? 'text-brand-200' : 'text-slate-500'}`}>Brightloop Billing</div>
+        <div className={`text-xs ${light ? 'text-brand-200' : 'text-slate-500'}`}>Subscription billing</div>
       </div>
     </div>
   );
@@ -23,6 +24,7 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const company = useCompany();
   const items = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
 
   function handleLogout() {
@@ -81,7 +83,7 @@ export default function Layout() {
           <button className="text-slate-600 lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
             <Icon name="menu" />
           </button>
-          <div className="hidden text-sm text-slate-500 lg:block">Brightloop Software</div>
+          <div className="hidden text-sm text-slate-500 lg:block">{company.companyName}</div>
           <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
             {ROLE_LABELS[user.role]}
           </span>

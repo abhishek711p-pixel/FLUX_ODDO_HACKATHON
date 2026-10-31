@@ -2,7 +2,7 @@
 
 **Odoo × FLUX Lucknow Hackathon '26 · Problem statement: Subscription Management System**
 
-SubFlow is one web app that runs the full subscription business of **Brightloop Software**: products, recurring plans, quotations, subscriptions, automatic invoices, payments and revenue reports. It replaces spreadsheets, hand typed invoices and missed renewals with clear rules that the system follows every time.
+SubFlow is a **generic** subscription management and recurring billing system for any business that sells on subscription: products, recurring plans, quotations, subscriptions, automatic invoices, payments and revenue reports. It replaces spreadsheets, hand typed invoices and missed renewals with clear rules that the system follows every time. The business name is a setting (`COMPANY_NAME` in `server/.env`); the problem statement's example company, Brightloop Software, is just one possible user.
 
 ```
 Product → Plan → Quotation → Subscription → Invoice → Payment → Reports
@@ -22,7 +22,7 @@ Product → Plan → Quotation → Subscription → Invoice → Payment → Repo
 
 ## The problem
 
-Brightloop sells software and services on monthly and yearly subscriptions. Today:
+The problem statement's example: a software company (Brightloop) sells software and services on monthly and yearly subscriptions. Today:
 - Renewals are tracked in spreadsheets and get missed
 - Invoices are typed by hand, so taxes and discounts are often wrong
 - Payments are matched to invoices manually
@@ -138,9 +138,9 @@ On Windows or Linux, install Node and PostgreSQL from their websites, create the
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | admin@brightloop.in | Admin@1234 |
-| Internal staff | staff@brightloop.in | Staff@1234 |
-| Customer | customer@brightloop.in | Customer@1234 |
+| Admin | admin@subflow.app | Admin@1234 |
+| Internal staff | staff@subflow.app | Staff@1234 |
+| Customer | customer@subflow.app | Customer@1234 |
 | Any demo customer (after `db:demo`) | see Customers page | Demo@12345 |
 
 The login page also has one click buttons for these accounts.

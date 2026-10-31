@@ -19,9 +19,9 @@ async function run() {
 
   console.log('Seeding demo users...');
   const users = [
-    { name: 'Aarav Admin', email: 'admin@brightloop.in', password: 'Admin@1234', role: 'admin', company: 'Brightloop Software' },
-    { name: 'Sneha Staff', email: 'staff@brightloop.in', password: 'Staff@1234', role: 'staff', company: 'Brightloop Software' },
-    { name: 'Rohan Mehta', email: 'customer@brightloop.in', password: 'Customer@1234', role: 'customer', company: 'Mehta Traders', phone: '9876543210' },
+    { name: 'Aarav Admin', email: 'admin@subflow.app', password: 'Admin@1234', role: 'admin', company: process.env.COMPANY_NAME || 'Your Company Pvt. Ltd.' },
+    { name: 'Sneha Staff', email: 'staff@subflow.app', password: 'Staff@1234', role: 'staff', company: process.env.COMPANY_NAME || 'Your Company Pvt. Ltd.' },
+    { name: 'Rohan Mehta', email: 'customer@subflow.app', password: 'Customer@1234', role: 'customer', company: 'Mehta Traders', phone: '9876543210' },
   ];
   for (const u of users) {
     const hash = await bcrypt.hash(u.password, 10);
@@ -40,12 +40,12 @@ async function run() {
   console.log('Seeding products and variants...');
   const products = [
     {
-      name: 'Brightloop ERP Suite', type: 'service', sales: 1499, cost: 400, addon: false, tax: 18,
+      name: 'Cloud ERP Suite', type: 'service', sales: 1499, cost: 400, addon: false, tax: 18,
       notes: 'Core business software: accounting, inventory and sales.',
       variants: [['Brand', 'Standard', 0], ['Brand', 'Odoo', 560]],
     },
     {
-      name: 'Brightloop CRM', type: 'service', sales: 799, cost: 200, addon: false, tax: 18,
+      name: 'Smart CRM', type: 'service', sales: 799, cost: 200, addon: false, tax: 18,
       notes: 'Leads, pipeline and customer follow ups.',
       variants: [['Edition', 'Basic', 0], ['Edition', 'Professional', 300]],
     },
@@ -95,13 +95,13 @@ async function run() {
   const templates = [
     {
       name: 'Growing Team Pack', days: 15, plan: 'Business Monthly', seats: 5, notes: 'Standard offer for teams of 5 to 20 people.',
-      lines: [['Brightloop ERP Suite', 'Odoo', 1], ['Brightloop CRM', 'Professional', 1], ['Priority Support', null, 1]],
+      lines: [['Cloud ERP Suite', 'Odoo', 1], ['Smart CRM', 'Professional', 1], ['Priority Support', null, 1]],
     },
     {
       name: 'Enterprise Yearly Contract', days: 30, plan: 'Business Yearly', seats: 25, notes: 'For large companies on yearly contracts.',
-      lines: [['Brightloop ERP Suite', 'Odoo', 1], ['Brightloop CRM', 'Professional', 1], ['Extra Storage 50 GB', null, 4], ['Priority Support', null, 1]],
+      lines: [['Cloud ERP Suite', 'Odoo', 1], ['Smart CRM', 'Professional', 1], ['Extra Storage 50 GB', null, 4], ['Priority Support', null, 1]],
     },
-    { name: 'Small Shop Starter', days: 7, plan: 'Starter Monthly', seats: 1, notes: 'Quick start for small shops.', lines: [['Brightloop ERP Suite', 'Standard', 1]] },
+    { name: 'Small Shop Starter', days: 7, plan: 'Starter Monthly', seats: 1, notes: 'Quick start for small shops.', lines: [['Cloud ERP Suite', 'Standard', 1]] },
   ];
   for (const t of templates) {
     const tid = await id(

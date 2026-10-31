@@ -12,8 +12,8 @@ Use the demo buttons on the login page to switch between Admin, Staff and Custom
 ---
 
 ## 0. Opening (15 s)
-"Brightloop runs subscriptions on spreadsheets: missed renewals, hand-typed invoices, nobody knows recurring revenue.
-SubFlow runs the whole cycle in one place: product, plan, quotation, subscription, invoice, payment, report."
+"Subscription businesses run on spreadsheets: missed renewals, hand-typed invoices, nobody knows recurring revenue.
+SubFlow runs the whole cycle in one place, for any company: product, plan, quotation, subscription, invoice, payment, report."
 
 ## 1. A new customer signs up (40 s)
 - Login page → **Create an account**. Type a weak password: the checklist shows what is missing and the form refuses it.

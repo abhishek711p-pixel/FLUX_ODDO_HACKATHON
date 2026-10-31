@@ -1,4 +1,4 @@
-# SubFlow — Subscription Management System (Brightloop Software)
+# SubFlow: Subscription Management System (generic; company name is a setting)
 
 Single source of truth for backend and frontend. Every member pastes this into Claude before prompting.
 
@@ -105,6 +105,6 @@ Discount logic (applied automatically at invoice generation): valid if active, t
 | GET | /reports/summary | admin, staff | ?from&to | {activeSubscriptions, mrr, revenue, outstanding, overdueAmount, overdueCount, subscriptionsByStatus:{draft,quotation,confirmed,active,paused,closed}, invoicesByStatus:{draft,confirmed,paid,cancelled}, revenueByMonth:[{month:'2026-05', amount}], topPlans:[{planName, count, mrr}]} |
 
 ## Demo accounts (seed)
-- admin@brightloop.in / Admin@1234
-- staff@brightloop.in / Staff@1234
-- customer@brightloop.in / Customer@1234
+- admin@subflow.app / Admin@1234
+- staff@subflow.app / Staff@1234
+- customer@subflow.app / Customer@1234

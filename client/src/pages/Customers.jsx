@@ -57,7 +57,7 @@ export default function Customers() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title="Customers" subtitle="Businesses and people who subscribe to Brightloop plans."
+      <PageHeader title="Customers" subtitle="Businesses and people who subscribe to your plans."
         actions={<button className="btn-primary" onClick={openForm}>Add customer</button>} />
 
       <div className="mb-4">

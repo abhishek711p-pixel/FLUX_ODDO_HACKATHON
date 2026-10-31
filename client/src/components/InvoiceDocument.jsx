@@ -1,14 +1,16 @@
 import { formatDate, formatINR } from '../utils/format.js';
+import { useCompany } from '../hooks/useCompany.js';
 
 // The invoice itself: used on the detail page and on the print page
 export default function InvoiceDocument({ inv }) {
   const hasDiscount = inv.totals.discount > 0;
+  const company = useCompany();
   return (
     <div className="bg-white">
       <div className="flex flex-col justify-between gap-6 sm:flex-row">
         <div>
-          <div className="text-xl font-semibold text-brand-700">Brightloop Software</div>
-          <div className="mt-1 text-sm text-slate-500">Subscription billing · billing@brightloop.in</div>
+          <div className="text-xl font-semibold text-brand-700">{company.companyName}</div>
+          <div className="mt-1 text-sm text-slate-500">Subscription billing{company.companyEmail ? ` · ${company.companyEmail}` : ''}</div>
         </div>
         <div className="sm:text-right">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tax invoice</div>

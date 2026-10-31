@@ -17,9 +17,9 @@ export async function issueResetLink(db, user, { purpose = 'reset' } = {}) {
 
   const link = `${config.clientUrl}/reset-password?token=${token}`;
   const isInvite = purpose === 'invite';
-  const subject = isInvite ? 'Your Brightloop billing account is ready' : 'Reset your Brightloop password';
+  const subject = isInvite ? `Your ${config.company.name} billing account is ready` : `Reset your ${config.company.name} password`;
   const text = isInvite
-    ? `Hi ${user.name},\n\nAn account was created for you on Brightloop Billing.\nSet your password here (valid for ${TOKEN_TTL_MINUTES} minutes):\n${link}\n`
+    ? `Hi ${user.name},\n\nAn account was created for you on ${config.company.name} billing.\nSet your password here (valid for ${TOKEN_TTL_MINUTES} minutes):\n${link}\n`
     : `Hi ${user.name},\n\nWe received a request to reset your password.\nReset it here (valid for ${TOKEN_TTL_MINUTES} minutes):\n${link}\n\nIf you did not ask for this, you can ignore this email.\n`;
 
   await sendMail({ to: user.email, subject, text });

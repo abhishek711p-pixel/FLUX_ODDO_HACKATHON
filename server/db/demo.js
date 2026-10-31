@@ -76,7 +76,7 @@ async function run() {
         `9${between(100000000, 999999999)}`, `${joined}T10:00:00+05:30`]);
     }
     const customerIds = await bulkInsert(client, 'users', ['name', 'email', 'password_hash', 'role', 'company', 'phone', 'created_at'], customerRows);
-    const rohanId = (await client.query("SELECT id FROM users WHERE email = 'customer@brightloop.in'")).rows[0].id;
+    const rohanId = (await client.query("SELECT id FROM users WHERE email = 'customer@subflow.app'")).rows[0].id;
 
     // ---------- Subscriptions ----------
     console.log(`Creating ${SUBSCRIPTIONS} subscriptions with history...`);
@@ -238,7 +238,7 @@ async function run() {
               (SELECT COUNT(*) FROM invoices) AS invoices, (SELECT COUNT(*) FROM payments) AS payments`
     )).rows[0];
     console.log(`Done in ${((Date.now() - started) / 1000).toFixed(1)}s: ${c.customers} customers, ${c.subscriptions} subscriptions, ${c.invoices} invoices, ${c.payments} payments.`);
-    console.log('Demo customers log in with their email and password Demo@12345. Rohan (customer@brightloop.in) has 3 subscriptions with history.');
+    console.log('Demo customers log in with their email and password Demo@12345. Rohan (customer@subflow.app) has 3 subscriptions with history.');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     throw err;

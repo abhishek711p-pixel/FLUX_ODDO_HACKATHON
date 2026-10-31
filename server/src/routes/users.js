@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { config } from '../config.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { z } from 'zod';
@@ -67,8 +68,8 @@ router.post(
     const hash = await bcrypt.hash(data.password, 10);
     const { rows } = await query(
       `INSERT INTO users (name, email, password_hash, role, company, phone)
-       VALUES ($1, $2, $3, $4, 'Brightloop Software', $5) RETURNING ${USER_FIELDS}`,
-      [data.name, data.email, hash, data.role, data.phone]
+       VALUES ($1, $2, $3, $4, $6, $5) RETURNING ${USER_FIELDS}`,
+      [data.name, data.email, hash, data.role, data.phone, config.company.name]
     );
     res.status(201).json(toCamel(rows[0]));
   })

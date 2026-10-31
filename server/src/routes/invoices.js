@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { config } from '../config.js';
 import { z } from 'zod';
 import { query, withTransaction } from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
@@ -219,7 +220,7 @@ router.post(
           to: r.email,
           subject: `Payment reminder: ${r.number} is overdue`,
           text: `Hi ${r.name},\n\nThis is a reminder that invoice ${r.number} was due on ${r.due_date}.\n` +
-            `Amount still due: ${inr(r.due)}\n\nView it here: ${base}/invoices/${r.id}\n\nIf you have already paid, please ignore this message.\nBrightloop Software`,
+            `Amount still due: ${inr(r.due)}\n\nView it here: ${base}/invoices/${r.id}\n\nIf you have already paid, please ignore this message.\n${config.company.name}`,
         });
         if (mail.sent) emailed += 1;
       }
@@ -286,9 +287,9 @@ router.post(
     const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/invoices/${inv.id}`;
     const mail = await sendMail({
       to: inv.customer.email,
-      subject: `Invoice ${inv.number} from Brightloop Software: ${inr(inv.totals.due)} due by ${inv.dueDate}`,
+      subject: `Invoice ${inv.number} from ${config.company.name}: ${inr(inv.totals.due)} due by ${inv.dueDate}`,
       text: `Hi ${inv.customer.name},\n\nYour invoice ${inv.number} for ${inv.subscription.planName} (${inv.periodStart} to ${inv.periodEnd}) is ready.\n` +
-        `Total: ${inr(inv.totals.total)}\nDue date: ${inv.dueDate}\n\nView or print it here: ${link}\n\nThank you,\nBrightloop Software`,
+        `Total: ${inr(inv.totals.total)}\nDue date: ${inv.dueDate}\n\nView or print it here: ${link}\n\nThank you,\n${config.company.name}`,
     });
     res.json({ ...inv, emailSent: mail.sent });
   })
@@ -309,7 +310,7 @@ router.post(
       to: inv.customer.email,
       subject: `Payment reminder: ${inv.number} is ${inv.daysOverdue} day${inv.daysOverdue === 1 ? '' : 's'} overdue`,
       text: `Hi ${inv.customer.name},\n\nThis is a reminder that invoice ${inv.number} was due on ${inv.dueDate}.\n` +
-        `Amount still due: ${inr(inv.totals.due)}\n\nView it here: ${link}\n\nIf you have already paid, please ignore this message.\nBrightloop Software`,
+        `Amount still due: ${inr(inv.totals.due)}\n\nView it here: ${link}\n\nIf you have already paid, please ignore this message.\n${config.company.name}`,
     });
     res.json({ ...inv, emailSent: mail.sent });
   })
