@@ -1,14 +1,13 @@
 # Team split
 
 Each member owns one area: they must be able to explain it in 2 minutes and answer "why" questions about it.
-Fill in names below.
 
 | Member | Area | Files to know (server) | Files to know (client) |
 |---|---|---|---|
-| Himanshu Karmakar | Billing engine, invoices, payments, finance dashboard, demo | `services/billing.js`, `routes/invoices.js`, `routes/payments.js`, `routes/reports.js`, `db/demo.js` | `pages/Invoices.jsx`, `pages/InvoiceDetail.jsx`, `pages/FinanceDashboard.jsx`, `components/RunBilling.jsx`, `components/RecordPayment.jsx` |
-| Member 2: ______ | Auth, roles, users, customers, password reset | `routes/auth.js`, `routes/users.js`, `middleware/auth.js`, `utils/validation.js`, `utils/resetToken.js` | `pages/Login.jsx`, `pages/Signup.jsx`, `pages/ForgotPassword.jsx`, `pages/ResetPassword.jsx`, `pages/Users.jsx`, `pages/Customers.jsx`, `components/ProtectedRoute.jsx` |
-| Member 3: ______ | Catalog: products, variants, plans, taxes, discounts | `routes/products.js`, `routes/plans.js`, `routes/taxes.js`, `routes/discounts.js`, `db/schema.sql` | `pages/Products.jsx`, `pages/Plans.jsx`, `pages/Taxes.jsx`, `pages/Discounts.jsx` |
-| Member 4: ______ | Subscriptions, quotation templates, status flow, customer portal | `routes/subscriptions.js`, `services/subscriptions.js`, `routes/templates.js` | `pages/Subscriptions.jsx`, `pages/SubscriptionForm.jsx`, `pages/SubscriptionDetail.jsx`, `pages/Templates.jsx`, `pages/CustomerDashboard.jsx`, `components/LinesEditor.jsx` |
+| Abhishek Jain | Billing engine, invoices, payments, finance dashboard | `services/billing.js`, `routes/invoices.js`, `routes/payments.js`, `routes/reports.js`, `db/demo.js` | `pages/Invoices.jsx`, `pages/InvoiceDetail.jsx`, `pages/FinanceDashboard.jsx`, `components/RunBilling.jsx`, `components/RecordPayment.jsx` |
+| Radhika | Auth, roles, users, customers, password reset | `routes/auth.js`, `routes/users.js`, `middleware/auth.js`, `utils/validation.js`, `utils/resetToken.js` | `pages/Login.jsx`, `pages/Signup.jsx`, `pages/ForgotPassword.jsx`, `pages/ResetPassword.jsx`, `pages/Users.jsx`, `pages/Customers.jsx`, `components/ProtectedRoute.jsx` |
+| Vikash Kumar | Catalog: products, variants, plans, taxes, discounts | `routes/products.js`, `routes/plans.js`, `routes/taxes.js`, `routes/discounts.js`, `db/schema.sql` | `pages/Products.jsx`, `pages/Plans.jsx`, `pages/Taxes.jsx`, `pages/Discounts.jsx` |
+| Kshiteesh Pandey | Subscriptions, quotation templates, status flow, customer portal | `routes/subscriptions.js`, `services/subscriptions.js`, `routes/templates.js` | `pages/Subscriptions.jsx`, `pages/SubscriptionForm.jsx`, `pages/SubscriptionDetail.jsx`, `pages/Templates.jsx`, `pages/CustomerDashboard.jsx`, `components/LinesEditor.jsx` |
 
 ## How each member gets ready (30 minutes)
 
