@@ -5,6 +5,7 @@ import { usePagedList } from '../hooks/usePagedList.js';
 import PasswordRules, { isStrongPassword } from '../components/PasswordRules.jsx';
 import { Alert, Badge, DataTable, Field, Modal, PageHeader, Pagination, SearchInput } from '../components/ui.jsx';
 import { formatDate, ROLE_LABELS } from '../utils/format.js';
+import Select from '../components/Select.jsx';
 
 const EMPTY = { name: '', email: '', phone: '', password: '', role: 'staff' };
 
@@ -83,11 +84,11 @@ export default function Users() {
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput value={list.search} onChange={list.setSearch} placeholder="Search name or email" />
-        <select className="input w-auto" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+        <Select className="input w-auto" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
           <option value="">All roles</option>
           <option value="staff">Internal Staff</option>
           <option value="admin">Admin</option>
-        </select>
+        </Select>
       </div>
       <div className="mb-4 space-y-2">
         <Alert type="success">{notice}</Alert>
@@ -109,10 +110,10 @@ export default function Users() {
             <Field id="u-phone" label="Phone (optional)" value={form.phone} onChange={set('phone')} error={errors.phone} />
             <div>
               <label className="label" htmlFor="u-role">Role</label>
-              <select id="u-role" className="input" value={form.role} onChange={set('role')}>
+              <Select id="u-role" className="input" value={form.role} onChange={set('role')}>
                 <option value="staff">Internal Staff</option>
                 <option value="admin">Admin</option>
-              </select>
+              </Select>
             </div>
           </div>
           <div>

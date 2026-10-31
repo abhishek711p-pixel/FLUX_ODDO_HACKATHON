@@ -18,8 +18,8 @@ export function todayISO() {
 
 export const ROLE_LABELS = { admin: 'Admin', staff: 'Internal Staff', customer: 'Customer' };
 
-export const PERIOD_LABELS = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' };
-export const PER_PERIOD = { daily: 'day', weekly: 'week', monthly: 'month', yearly: 'year' };
+export const PERIOD_LABELS = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly' };
+export const PER_PERIOD = { daily: 'day', weekly: 'week', monthly: 'month', quarterly: 'quarter', yearly: 'year' };
 
 // Subscription status: label + badge colour
 export const SUB_STATUS = {

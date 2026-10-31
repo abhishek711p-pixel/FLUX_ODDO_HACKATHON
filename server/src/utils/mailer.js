@@ -14,8 +14,12 @@ const transporter = mailEnabled
     })
   : null;
 
+// Demo customers use reserved example.* domains that can never receive mail.
+// Skip them even when SMTP is on, so a bulk reminder does not burn the email account's daily limit.
+const isFakeAddress = (to) => /@example\.(com|in|org|net)$/i.test(String(to).trim());
+
 export async function sendMail({ to, subject, text, html }) {
-  if (!mailEnabled) {
+  if (!mailEnabled || isFakeAddress(to)) {
     console.log(`\n[email demo mode] To: ${to}\nSubject: ${subject}\n${text}\n`);
     return { sent: false };
   }

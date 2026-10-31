@@ -21,7 +21,7 @@ function lastSixMonths(date) {
 const isDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
 
 // Monthly value of one subscription (plan seats + product lines, before tax and discounts)
-const MONTHLY_FACTOR = `CASE p.billing_period WHEN 'daily' THEN 30.0 WHEN 'weekly' THEN 52.0 / 12 WHEN 'monthly' THEN 1.0 ELSE 1.0 / 12 END`;
+const MONTHLY_FACTOR = `CASE p.billing_period WHEN 'daily' THEN 30.0 WHEN 'weekly' THEN 52.0 / 12 WHEN 'monthly' THEN 1.0 WHEN 'quarterly' THEN 1.0 / 3 ELSE 1.0 / 12 END`;
 const SUB_VALUE = `(p.price * s.quantity + COALESCE((SELECT SUM(sl.quantity * sl.unit_price) FROM subscription_lines sl WHERE sl.subscription_id = s.id), 0))`;
 
 // GET /api/reports/summary?from=YYYY-MM-DD&to=YYYY-MM-DD&planId=

@@ -80,7 +80,7 @@ async function run() {
 
     // ---------- Subscriptions ----------
     console.log(`Creating ${SUBSCRIPTIONS} subscriptions with history...`);
-    const planMix = [['Starter Monthly', 45], ['Business Monthly', 34], ['Business Yearly', 15], ['Weekly Pilot', 4], ['Daily Event Pass', 2]];
+    const planMix = [['Starter Monthly', 45], ['Business Monthly', 28], ['Business Quarterly', 8], ['Business Yearly', 13], ['Weekly Pilot', 4], ['Daily Event Pass', 2]];
     const subs = [];
     for (let i = 0; i < SUBSCRIPTIONS; i++) {
       const plan = planByName[weighted(planMix)] || pick(plans);

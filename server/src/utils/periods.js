@@ -1,7 +1,7 @@
 // Billing period helpers. Dates are plain 'YYYY-MM-DD' strings (no timezone surprises).
 
 // Postgres interval for one billing period
-export const PERIOD_INTERVAL = { daily: '1 day', weekly: '7 days', monthly: '1 month', yearly: '1 year' };
+export const PERIOD_INTERVAL = { daily: '1 day', weekly: '7 days', monthly: '1 month', quarterly: '3 months', yearly: '1 year' };
 
 // Today in India time as 'YYYY-MM-DD' (billing days follow the Indian calendar)
 export function todayISO() {
@@ -22,7 +22,7 @@ export function addPeriod(date, period, n = 1, anchorDay = null) {
   const d = new Date(`${date}T00:00:00Z`);
   if (period === 'daily') return addDays(date, n);
   if (period === 'weekly') return addDays(date, 7 * n);
-  const months = period === 'monthly' ? n : 12 * n;
+  const months = period === 'monthly' ? n : period === 'quarterly' ? 3 * n : 12 * n;
   const day = anchorDay || d.getUTCDate();
   d.setUTCDate(1);
   d.setUTCMonth(d.getUTCMonth() + months);

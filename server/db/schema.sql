@@ -61,7 +61,7 @@ CREATE TABLE plans (
   id             SERIAL PRIMARY KEY,
   name           VARCHAR(120) NOT NULL,
   price          NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (price >= 0),   -- price per unit (seat) per billing period
-  billing_period VARCHAR(10) NOT NULL CHECK (billing_period IN ('daily', 'weekly', 'monthly', 'yearly')),
+  billing_period VARCHAR(10) NOT NULL CHECK (billing_period IN ('daily', 'weekly', 'monthly', 'quarterly', 'yearly')),
   min_quantity   INT NOT NULL DEFAULT 1 CHECK (min_quantity >= 1),        -- minimum seats on a subscription
   tax_id         INT REFERENCES taxes(id),                                -- GST rule applied to the plan fee
   description    TEXT,

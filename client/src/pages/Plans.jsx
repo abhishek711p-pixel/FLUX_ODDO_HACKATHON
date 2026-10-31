@@ -168,6 +168,7 @@ export default function Plans() {
                 <option value="daily">Day</option>
                 <option value="weekly">Week</option>
                 <option value="monthly">Month</option>
+                <option value="quarterly">Quarter (3 months)</option>
                 <option value="yearly">Year</option>
               </SelectField>
               <Field id="pl-min" type="number" min="1" step="1" label="Minimum seats" value={form.minQuantity}

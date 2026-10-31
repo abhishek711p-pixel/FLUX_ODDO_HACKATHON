@@ -4,8 +4,8 @@ Single source of truth for backend and frontend. Every member pastes this into C
 
 ## Stack
 - Frontend: React 18 + Vite + Tailwind CSS v4 + React Router + axios (folder `client/`, port 5173)
-- Backend: Node 20+ + Express + `pg` (plain SQL, no ORM) + JWT + bcrypt + zod + node-cron + nodemailer (folder `server/`, port 4000)
-- Database: PostgreSQL (local). Schema in `server/db/schema.sql`, demo data via `npm run seed`.
+- Backend: Node 20+ + Express + `pg` (plain SQL, no ORM) + JWT + bcrypt + zod + nodemailer (billing runs on startup and hourly via setInterval) (folder `server/`, port 4000)
+- Database: PostgreSQL (local). Schema in `server/db/schema.sql`, seed via `npm run db:setup`, 5,000 demo subscriptions via `npm run db:demo`.
 - Currency: INR (₹), Indian number format via `Intl.NumberFormat('en-IN', {style:'currency', currency:'INR'})`. Amounts stored as `NUMERIC(12,2)`.
 
 ## Roles
@@ -16,8 +16,8 @@ Single source of truth for backend and frontend. Every member pastes this into C
 | customer | Portal. Only own subscriptions and invoices. Can pause / resume / close / renew own subscription if the plan allows it, and switch add-ons on/off. Public signup always creates a customer. |
 
 ## Status flows (enforced in backend)
-- Subscription: `draft → quotation → confirmed → active → closed`. Extra: `active ⇄ paused` (only if plan.pausable). `close` from active/paused only if plan.closable (admin/staff can always close). `renew` on active/closed (if plan.renewable) extends expiry by one billing period and sets status active.
-- Invoice: `draft → confirmed → paid`. `cancel` allowed from draft/confirmed when no payments.
+- Subscription: `draft → quotation → confirmed → active → closed`. Extra: `active ⇄ paused` (only if plan.pausable). `close` from active/paused only if plan.closable, or once the subscription has expired (enforced for everyone). `renew` on active/closed (if plan.renewable) extends expiry by one billing period and sets status active.
+- Invoice: `draft → confirmed → paid`. `cancel` allowed from draft/confirmed when no payments, and only for the latest invoice of the subscription (its period is billed again).
 - No double billing: unique `(subscription_id, period_start)` on invoices + row lock during billing.
 
 ## API conventions
@@ -61,7 +61,7 @@ Password rule: length > 8, at least one uppercase, one lowercase, one special ch
 ### Recurring plans (admin write)
 | GET | /plans | any | ?active | [{id, name, price, billingPeriod, minQuantity, startDate, endDate, autoClose, closable, pausable, renewable, active}] |
 | GET | /plans/:id | | | plan |
-| POST | /plans | admin | {name, price, billingPeriod:'daily'|'weekly'|'monthly'|'yearly', minQuantity, startDate, endDate?, autoClose, closable, pausable, renewable} | plan |
+| POST | /plans | admin | {name, price, billingPeriod:'daily'|'weekly'|'monthly'|'quarterly'|'yearly', minQuantity, startDate, endDate?, autoClose, closable, pausable, renewable} | plan |
 | PUT | /plans/:id | admin | same + active | plan |
 
 ### Quotation templates (admin, staff)

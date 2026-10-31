@@ -16,7 +16,7 @@ const planSchema = z
     name: z.string({ error: 'Name is required' }).trim().min(2, 'Name is required').max(120, 'Name is too long'),
     description: optionalText(1000),
     price: moneySchema('Price'),
-    billingPeriod: z.enum(['daily', 'weekly', 'monthly', 'yearly'], { error: 'Choose a billing period' }),
+    billingPeriod: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'yearly'], { error: 'Choose a billing period' }),
     minQuantity: intSchema('Minimum quantity', 1),
     taxId: optionalIdSchema,
     startDate: dateSchema('Start date'),

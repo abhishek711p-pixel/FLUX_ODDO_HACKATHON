@@ -73,6 +73,7 @@ async function run() {
     // name, price per seat, period, min seats, start, end, autoClose, closable, pausable, renewable, description
     ['Starter Monthly', 499, 'monthly', 1, '2026-01-01', null, false, true, true, true, 'For small shops. Pause any time.'],
     ['Business Monthly', 999, 'monthly', 3, '2026-01-01', null, false, true, true, true, 'For growing teams, minimum 3 seats.'],
+    ['Business Quarterly', 2799, 'quarterly', 3, '2026-01-01', null, false, true, true, true, 'Billed every 3 months. About 7% cheaper than paying monthly.'],
     ['Business Yearly', 9999, 'yearly', 5, '2026-01-01', null, false, false, false, true, 'Annual contract, 2 months free. Cannot be closed early.'],
     ['Weekly Pilot', 149, 'weekly', 1, '2026-10-01', '2026-12-31', true, true, false, false, 'Limited pilot. Closes on its own at the end date.'],
     ['Daily Event Pass', 99, 'daily', 1, '2026-10-01', '2027-03-31', true, true, false, false, 'Pay per day for events and fairs.'],

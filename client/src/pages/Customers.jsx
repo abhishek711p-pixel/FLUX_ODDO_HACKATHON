@@ -66,9 +66,12 @@ export default function Customers() {
       <div className="mb-4 space-y-2">
         {created && (
           <Alert type="success">
-            {created.user.name} was added. A link to set their password was sent to {created.user.email}.
-            {created.devResetLink && (
-              <> Demo mode: <a className="font-medium underline" href={created.devResetLink} target="_blank" rel="noreferrer">invite link</a>.</>
+            {created.devResetLink ? (
+              <>{created.user.name} was added. Email is off (demo mode), so nothing was sent. Open this{' '}
+                <a className="font-medium underline" href={created.devResetLink} target="_blank" rel="noreferrer">invite link</a>
+                {' '}to set their password (valid for 60 minutes), or share it with them.</>
+            ) : (
+              <>{created.user.name} was added. A link to set their password was emailed to {created.user.email}.</>
             )}
           </Alert>
         )}
