@@ -15,7 +15,7 @@ export async function issueResetLink(db, user, { purpose = 'reset' } = {}) {
     [hashToken(token), String(TOKEN_TTL_MINUTES), user.id]
   );
 
-  const link = `${config.clientUrl}/reset-password?token=${token}`;
+  const link = `${config.clientUrl}/#/reset-password?token=${token}`;
   const isInvite = purpose === 'invite';
   const subject = isInvite ? `Your ${config.company.name} billing account is ready` : `Reset your ${config.company.name} password`;
   const text = isInvite

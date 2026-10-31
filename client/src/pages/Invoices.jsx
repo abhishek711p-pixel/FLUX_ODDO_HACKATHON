@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api, { errorMessage } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePagedList } from '../hooks/usePagedList.js';
@@ -21,7 +21,8 @@ export default function Invoices() {
   const { user } = useAuth();
   const internal = user.role !== 'customer';
   const navigate = useNavigate();
-  const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get('tab') || '');
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(() => params.get('tab') || '');
   const filters = tab === 'overdue' ? { overdue: 'true' } : tab ? { status: tab } : {};
   const list = usePagedList('/invoices', filters);
   const [selected, setSelected] = useState([]);

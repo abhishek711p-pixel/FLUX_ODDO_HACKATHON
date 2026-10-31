@@ -98,7 +98,7 @@ export default function InvoiceDetail() {
             </button>
           )}
           {can('print') && (
-            <a className="btn-secondary" href={`/invoices/${inv.id}/print`} target="_blank" rel="noreferrer">
+            <a className="btn-secondary" href={`#/invoices/${inv.id}/print`} target="_blank" rel="noreferrer">
               <Icon name="print" className="h-4 w-4" /> Print
             </a>
           )}

@@ -237,7 +237,7 @@ router.post(
           to: r.email,
           subject: `Payment reminder: ${r.number} is overdue`,
           text: `Hi ${r.name},\n\nThis is a reminder that invoice ${r.number} was due on ${r.due_date}.\n` +
-            `Amount still due: ${inr(r.due)}\n\nView it here: ${base}/invoices/${r.id}\n\nIf you have already paid, please ignore this message.\n${config.company.name}`,
+            `Amount still due: ${inr(r.due)}\n\nView it here: ${base}/#/invoices/${r.id}\n\nIf you have already paid, please ignore this message.\n${config.company.name}`,
         });
         if (mail.sent) emailed += 1;
       }
@@ -309,7 +309,7 @@ router.post(
       });
       return getInvoice(db, id, req.user);
     });
-    const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/invoices/${inv.id}`;
+    const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/#/invoices/${inv.id}`;
     const mail = await sendMail({
       to: inv.customer.email,
       subject: `Invoice ${inv.number} from ${config.company.name}: ${inr(inv.totals.due)} due by ${inv.dueDate}`,
@@ -334,7 +334,7 @@ router.post(
       summary: `Payment reminder sent for ${before.number} (${before.daysOverdue} days overdue)`,
     });
     const inv = await getInvoice({ query }, id, req.user);
-    const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/invoices/${inv.id}`;
+    const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/#/invoices/${inv.id}`;
     const mail = await sendMail({
       to: inv.customer.email,
       subject: `Payment reminder: ${inv.number} is ${inv.daysOverdue} day${inv.daysOverdue === 1 ? '' : 's'} overdue`,
