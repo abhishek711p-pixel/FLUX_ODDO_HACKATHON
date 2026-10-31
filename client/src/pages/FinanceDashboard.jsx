@@ -154,7 +154,7 @@ export default function FinanceDashboard() {
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Right now</div>
           <FitGroup><div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
             <Kpi label="Active subscriptions" value={data.activeSubscriptions.toLocaleString('en-IN')} tone="brand" to="/subscriptions"
-              hint={`${data.pausedSubscriptions} paused · ${data.subscriptionsByStatus.quotation} quotations open`} />
+              hint={`${data.expiringSoon ? `${data.expiringSoon} expire in 30 days · ` : ''}${data.pausedSubscriptions} paused · ${data.subscriptionsByStatus.quotation} quotations open`} />
             <Kpi label="Monthly recurring revenue" value={formatINR(data.mrr)} hint={`${compactINR(data.arr)} a year, before GST`} />
             <Kpi label="Still owed" value={formatINR(data.outstanding)} to="/invoices"
               hint={`${data.unpaidCount} unpaid invoice${data.unpaidCount === 1 ? '' : 's'}${data.draftInvoices ? ` · ${data.draftInvoices} drafts to confirm` : ''}`} />

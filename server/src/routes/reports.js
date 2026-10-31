@@ -45,7 +45,8 @@ router.get(
       // Subscriptions right now
       query(
         `SELECT s.status, COUNT(*) AS n,
-                COALESCE(SUM(${SUB_VALUE} * ${MONTHLY_FACTOR}) FILTER (WHERE s.status = 'active'), 0) AS mrr
+                COALESCE(SUM(${SUB_VALUE} * ${MONTHLY_FACTOR}) FILTER (WHERE s.status = 'active'), 0) AS mrr,
+                COUNT(*) FILTER (WHERE s.status = 'active' AND s.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 30) AS expiring
          FROM subscriptions s JOIN plans p ON p.id = s.plan_id
          WHERE ${planSub} AND $1::date IS NOT NULL AND $2::date IS NOT NULL AND $3::date IS NOT NULL
          GROUP BY s.status`,
@@ -172,6 +173,7 @@ router.get(
     res.json({
       filters: { from, to, planId, today },
       activeSubscriptions: byStatus.active,
+      expiringSoon: subs.rows.reduce((x, r) => x + Number(r.expiring || 0), 0),
       pausedSubscriptions: byStatus.paused,
       subscriptionsByStatus: byStatus,
       mrr: round2(mrr),

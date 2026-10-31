@@ -1,5 +1,9 @@
 import 'dotenv/config';
 
+// On Render the public address is known only at run time: use it for links in emails
+if (!process.env.CLIENT_URL && process.env.RENDER_EXTERNAL_URL) process.env.CLIENT_URL = process.env.RENDER_EXTERNAL_URL;
+if (!process.env.CLIENT_URL && process.env.VERCEL_PROJECT_PRODUCTION_URL) process.env.CLIENT_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+
 const required = ['DATABASE_URL', 'JWT_SECRET'];
 for (const key of required) {
   if (!process.env[key]) {

@@ -8,7 +8,7 @@ pg.types.setTypeParser(1700, (value) => (value === null ? null : Number(value)))
 // COUNT(*) returns bigint; convert to number
 pg.types.setTypeParser(20, (value) => Number(value));
 
-export const pool = new pg.Pool({ connectionString: config.databaseUrl, max: 10 });
+export const pool = new pg.Pool({ connectionString: config.databaseUrl, max: process.env.VERCEL ? 3 : 10 });
 
 export const query = (text, params) => pool.query(text, params);
 
