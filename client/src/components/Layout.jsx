@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -145,7 +146,9 @@ function LayoutFrame() {
           </div>
         </header>
         <main className="flex-1 px-4 py-6 lg:px-8">
-          <Outlet />
+          <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Loading"><span className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" /></div>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>
