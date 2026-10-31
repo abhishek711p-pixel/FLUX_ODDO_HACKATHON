@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { query, withTransaction } from '../db.js';
+import { logActivity, diff } from '../utils/activity.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { HttpError, isId, asyncHandler, toCamel, validate } from '../utils/http.js';
 import { dateSchema, moneySchema } from '../utils/validation.js';
@@ -103,6 +104,11 @@ async function save(req, id) {
     for (const pid of new Set(d.productIds)) {
       await db.query('INSERT INTO discount_products (discount_id, product_id) VALUES ($1, $2)', [discountId, pid]);
     }
+    await logActivity(db, req.user, {
+      entity: 'discount', entityId: discountId, label: d.name, action: id ? 'updated' : 'created',
+      summary: `${id ? 'Changed' : 'Created'} discount ${d.name}: ${d.type === 'percent' ? `${d.value}%` : `₹${d.value}`} off${d.usageLimit ? `, limit ${d.usageLimit} uses` : ''}${d.active === false ? ' (switched off)' : ''}`,
+      details: { type: d.type, value: d.value, minPurchase: d.minPurchase, minQuantity: d.minQuantity, startDate: d.startDate, endDate: d.endDate, usageLimit: d.usageLimit, active: d.active ?? null },
+    });
     const { rows } = await db.query(`${LIST_SQL} WHERE d.id = $1 GROUP BY d.id`, [discountId]);
     return withStatus(rows[0], todayISO());
   });

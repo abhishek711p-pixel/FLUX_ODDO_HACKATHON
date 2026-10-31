@@ -6,6 +6,7 @@ import { HttpError, isId, asyncHandler, getPagination, toCamel, validate } from 
 import { dateSchema, moneySchema, optionalText } from '../utils/validation.js';
 import { round2, todayISO } from '../utils/periods.js';
 import { getInvoice } from './invoices.js';
+import { logActivity } from '../utils/activity.js';
 
 // Payments: recorded by the team against the right invoice, with method, amount, date and a note.
 // Partial payments are allowed; the invoice becomes Paid automatically once nothing is due.
@@ -14,6 +15,7 @@ router.use(requireAuth);
 router.param('id', (req, res, next, value) => (isId(value) ? next() : next(new HttpError(404, 'Payment not found'))));
 
 export const METHODS = ['cash', 'upi', 'bank_transfer', 'card', 'cheque'];
+const METHOD_LABELS = { cash: 'cash', upi: 'UPI', bank_transfer: 'bank transfer', card: 'card', cheque: 'cheque' };
 const inr = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(n);
 
 // GET /api/payments?method=&search=&from=&to=&page=   (customers see only their own)
@@ -90,7 +92,7 @@ router.post(
 
     const invoice = await withTransaction(async (db) => {
       // Lock the invoice so two people recording at once cannot overpay it
-      const inv = (await db.query('SELECT id, number, status, total, amount_paid FROM invoices WHERE id = $1 FOR UPDATE', [d.invoiceId])).rows[0];
+      const inv = (await db.query('SELECT id, number, subscription_id, status, total, amount_paid FROM invoices WHERE id = $1 FOR UPDATE', [d.invoiceId])).rows[0];
       if (!inv) throw new HttpError(404, 'Invoice not found');
       if (inv.status === 'draft') throw new HttpError(400, `${inv.number} is still a draft. Confirm it before recording a payment.`);
       if (inv.status === 'paid') throw new HttpError(400, `${inv.number} is already fully paid`);
@@ -109,6 +111,12 @@ router.post(
         `UPDATE invoices SET amount_paid = $1, status = CASE WHEN $1 >= total THEN 'paid' ELSE status END WHERE id = $2`,
         [paid, inv.id]
       );
+      const payId = (await db.query('SELECT MAX(id) AS id FROM payments WHERE invoice_id = $1', [inv.id])).rows[0].id;
+      await logActivity(db, req.user, {
+        entity: 'payment', entityId: payId, label: inv.number, action: 'recorded', subscriptionId: inv.subscription_id, invoiceId: inv.id,
+        summary: `Recorded ${inr(d.amount)} by ${METHOD_LABELS[d.method]} on ${inv.number}${paid >= inv.total ? ' (now fully paid)' : `, ${inr(round2(inv.total - paid))} still due`}`,
+        details: { amount: d.amount, method: d.method, paymentDate: d.paymentDate, note: d.note || null },
+      });
       return getInvoice(db, inv.id, req.user);
     });
     res.status(201).json(invoice);
@@ -121,10 +129,15 @@ router.delete(
   requireRole('admin'),
   asyncHandler(async (req, res) => {
     const invoice = await withTransaction(async (db) => {
-      const pay = (await db.query('SELECT id, invoice_id, amount FROM payments WHERE id = $1', [req.params.id])).rows[0];
+      const pay = (await db.query('SELECT id, invoice_id, amount, method FROM payments WHERE id = $1', [req.params.id])).rows[0];
       if (!pay) throw new HttpError(404, 'Payment not found');
-      await db.query('SELECT 1 FROM invoices WHERE id = $1 FOR UPDATE', [pay.invoice_id]);
+      const inv = (await db.query('SELECT number, subscription_id FROM invoices WHERE id = $1 FOR UPDATE', [pay.invoice_id])).rows[0];
       await db.query('DELETE FROM payments WHERE id = $1', [pay.id]);
+      await logActivity(db, req.user, {
+        entity: 'payment', entityId: pay.id, label: inv.number, action: 'reversed', subscriptionId: inv.subscription_id, invoiceId: pay.invoice_id,
+        summary: `Reversed a payment of ${inr(pay.amount)} (${METHOD_LABELS[pay.method] || pay.method}) on ${inv.number}`,
+        details: { amount: pay.amount, method: pay.method },
+      });
       await db.query(
         `UPDATE invoices SET amount_paid = GREATEST(amount_paid - $1, 0),
                 status = CASE WHEN status = 'paid' THEN 'confirmed' ELSE status END

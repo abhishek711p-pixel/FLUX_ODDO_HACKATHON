@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { query, withTransaction } from '../db.js';
+import { logActivity, diff } from '../utils/activity.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { HttpError, isId, asyncHandler, getPagination, toCamel, validate } from '../utils/http.js';
 import { moneySchema, optionalIdSchema, optionalText } from '../utils/validation.js';
@@ -131,6 +132,10 @@ router.post(
           [rows[0].id, v.attribute, v.value, v.extraPrice]
         );
       }
+      await logActivity(db, req.user, {
+        entity: 'product', entityId: rows[0].id, label: data.name, action: 'created',
+        summary: `Created product ${data.name}: sales price ₹${data.salesPrice}, ${data.variants.length} variants`,
+      });
       return getProduct(db, rows[0].id);
     });
     res.status(201).json(product);
@@ -146,6 +151,7 @@ router.put(
     const data = validate(productSchema, req.body);
     const product = await withTransaction(async (db) => {
       await assertTaxExists(db, data.taxId);
+      const before = (await db.query('SELECT name, sales_price, cost_price, active FROM products WHERE id = $1', [id])).rows[0];
       const { rowCount } = await db.query(
         `UPDATE products SET name = $1, type = $2, sales_price = $3, cost_price = $4, notes = $5, is_addon = $6,
                 tax_id = $7, active = COALESCE($8, active)
@@ -184,6 +190,14 @@ router.put(
           );
         }
       }
+      const after = (await db.query('SELECT name, sales_price, cost_price, active FROM products WHERE id = $1', [id])).rows[0];
+      const changes = diff(before, after, ['name', 'sales_price', 'cost_price', 'active']);
+      await logActivity(db, req.user, {
+        entity: 'product', entityId: id, label: after.name, action: 'updated', details: changes,
+        summary: `Changed product ${after.name}` + (Object.keys(changes).length
+          ? ': ' + Object.entries(changes).map(([k, v]) => `${k.replace('_', ' ')} ${v.from} → ${v.to}`).join(', ')
+          : ` (${data.variants.length} variants)`),
+      });
       return getProduct(db, id);
     });
     res.json(product);

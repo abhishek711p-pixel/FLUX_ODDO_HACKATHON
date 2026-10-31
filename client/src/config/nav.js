@@ -12,6 +12,7 @@ export const NAV_ITEMS = [
   { to: '/plans', label: 'Plans', icon: 'calendar', roles: ['admin', 'staff'], section: 'Catalog' },
   { to: '/discounts', label: 'Discounts', icon: 'tag', roles: ['admin', 'staff'], section: 'Catalog' },
   { to: '/taxes', label: 'Taxes', icon: 'percent', roles: ['admin', 'staff'], section: 'Catalog' },
+  { to: '/activity', label: 'Activity log', icon: 'history', roles: ['admin', 'staff'], section: 'Settings' },
   { to: '/team', label: 'Team and roles', icon: 'shield', roles: ['admin'], section: 'Settings' },
   { to: '/subscriptions', label: 'My subscriptions', icon: 'repeat', roles: ['customer'] },
   { to: '/invoices', label: 'My invoices', icon: 'receipt', roles: ['customer'] },

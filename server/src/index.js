@@ -14,6 +14,8 @@ import invoiceRoutes from './routes/invoices.js';
 import paymentRoutes from './routes/payments.js';
 import discountRoutes from './routes/discounts.js';
 import reportRoutes from './routes/reports.js';
+import activityRoutes from './routes/activity.js';
+import { ensureActivityTable } from './utils/activity.js';
 import { startAutoBilling } from './services/billing.js';
 
 const app = express();
@@ -45,12 +47,17 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/activity', activityRoutes);
 app.use('/api', userRoutes); // /api/users and /api/customers (keep last: it is mounted on /api)
 
 app.use('/api', notFound);
 app.use(errorHandler);
 
-app.listen(config.port, () => {
-  console.log(`SubFlow API running on http://localhost:${config.port}`);
-  startAutoBilling();
-});
+ensureActivityTable()
+  .catch((err) => console.error('[activity log] could not create table:', err.message))
+  .finally(() => {
+    app.listen(config.port, () => {
+      console.log(`SubFlow API running on http://localhost:${config.port}`);
+      startAutoBilling();
+    });
+  });

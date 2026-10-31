@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { query } from '../db.js';
+import { logActivity, diff } from '../utils/activity.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { HttpError, isId, asyncHandler, toCamel, validate } from '../utils/http.js';
 import { dateSchema, intSchema, moneySchema, optionalDateSchema, optionalIdSchema, optionalText } from '../utils/validation.js';
@@ -85,6 +86,10 @@ router.post(
         d.autoClose, d.closable, d.pausable, d.renewable]
     );
     const plan = await query(`${PLAN_SELECT} WHERE p.id = $1`, [rows[0].id]);
+    await logActivity(null, req.user, {
+      entity: 'plan', entityId: rows[0].id, label: d.name, action: 'created',
+      summary: `Created plan ${d.name}: ₹${d.price} per seat, billed ${d.billingPeriod}`,
+    });
     res.status(201).json(toCamel(plan.rows[0]));
   })
 );
@@ -95,6 +100,7 @@ router.put(
   asyncHandler(async (req, res) => {
     const d = validate(planSchema, req.body);
     await assertTaxExists(d.taxId);
+    const before = toCamel((await query('SELECT * FROM plans WHERE id = $1', [req.params.id])).rows[0]);
     const { rowCount } = await query(
       `UPDATE plans SET name = $1, description = $2, price = $3, billing_period = $4, min_quantity = $5, tax_id = $6,
               start_date = $7, end_date = $8, auto_close = $9, closable = $10, pausable = $11, renewable = $12,
@@ -104,6 +110,14 @@ router.put(
         d.autoClose, d.closable, d.pausable, d.renewable, d.active ?? null, req.params.id]
     );
     if (!rowCount) throw new HttpError(404, 'Plan not found');
+    const after = toCamel((await query('SELECT * FROM plans WHERE id = $1', [req.params.id])).rows[0]);
+    const changes = diff(before, after, ['name', 'price', 'billingPeriod', 'minQuantity', 'taxId', 'startDate', 'endDate', 'autoClose', 'closable', 'pausable', 'renewable', 'active']);
+    if (Object.keys(changes).length) {
+      await logActivity(null, req.user, {
+        entity: 'plan', entityId: after.id, label: after.name, action: 'updated', details: changes,
+        summary: `Changed plan ${after.name}: ` + Object.entries(changes).map(([k, v]) => `${k} ${v.from ?? 'none'} → ${v.to ?? 'none'}`).join(', '),
+      });
+    }
     const plan = await query(`${PLAN_SELECT} WHERE p.id = $1`, [req.params.id]);
     res.json(toCamel(plan.rows[0]));
   })

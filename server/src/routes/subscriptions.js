@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { query, withTransaction } from '../db.js';
+import { logActivity } from '../utils/activity.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { HttpError, isId, asyncHandler, getPagination, toCamel, validate } from '../utils/http.js';
 import { dateSchema, intSchema, moneySchema, optionalDateSchema, optionalIdSchema, optionalText } from '../utils/validation.js';
@@ -174,7 +175,12 @@ router.post(
         [d.customerId, d.planId, d.quantity, d.startDate, d.expiryDate, d.paymentTermsDays, d.templateId, d.notes, req.user.id]
       );
       await writeLines(db, rows[0].id, d.lines);
-      return getSubscription(db, rows[0].id, req.user);
+      const created = await getSubscription(db, rows[0].id, req.user);
+      await logActivity(db, req.user, {
+        entity: 'subscription', entityId: created.id, label: created.number, action: 'created', subscriptionId: created.id,
+        summary: `Created subscription ${created.number} (draft) for ${created.customer?.name || 'customer'}`,
+      });
+      return created;
     });
     res.status(201).json(sub);
   })
@@ -200,7 +206,12 @@ router.put(
         [d.customerId, d.planId, d.quantity, d.startDate, d.expiryDate, d.paymentTermsDays, d.templateId, d.notes, id]
       );
       await writeLines(db, id, d.lines);
-      return getSubscription(db, id, req.user);
+      const updated = await getSubscription(db, id, req.user);
+      await logActivity(db, req.user, {
+        entity: 'subscription', entityId: id, label: updated.number, action: 'updated', subscriptionId: id,
+        summary: `Edited ${updated.number} (${updated.status}): ${updated.quantity} seats, ${updated.lines.length} product lines`,
+      });
+      return updated;
     });
     res.json(sub);
   })
@@ -208,6 +219,10 @@ router.put(
 
 // ---------- Status changes ----------
 
+const ACTION_LABELS = {
+  send_quotation: 'Sent quotation for', confirm: 'Confirmed', activate: 'Activated', pause: 'Paused',
+  resume: 'Resumed', close: 'Closed', renew: 'Renewed', cancel: 'Cancelled',
+};
 const ACTIONS = ['send_quotation', 'confirm', 'activate', 'pause', 'resume', 'close', 'renew', 'cancel'];
 
 // POST /api/subscriptions/:id/transition  { action }
@@ -270,7 +285,16 @@ router.post(
         }
         default:
       }
-      return getSubscription(db, id, req.user);
+      const after = await getSubscription(db, id, req.user);
+      const label = ACTION_LABELS[action] || action;
+      await logActivity(db, req.user, {
+        entity: 'subscription', entityId: id, label: s.number, action, subscriptionId: id,
+        summary: s.status === after.status
+          ? `${label} ${s.number}${action === 'renew' ? ` (expiry ${s.expiryDate || 'none'} → ${after.expiryDate})` : ''}`
+          : `${label} ${s.number}: ${s.status} → ${after.status}`,
+        details: { from: s.status, to: after.status, ...(action === 'renew' ? { expiryFrom: s.expiryDate, expiryTo: after.expiryDate } : {}) },
+      });
+      return after;
     });
     res.json(sub);
   })
@@ -315,6 +339,10 @@ router.post(
         [id, d.productId, d.variantId, d.quantity, price, product.tax_id]
       );
       await db.query('UPDATE subscriptions SET updated_at = NOW() WHERE id = $1', [id]);
+      await logActivity(db, req.user, {
+        entity: 'subscription', entityId: id, label: s.number, action: 'line_added', subscriptionId: id,
+        summary: `Added ${product.name} × ${d.quantity} to ${s.number}${product.is_addon ? ' (add-on)' : ''}`,
+      });
       return getSubscription(db, id, req.user);
     });
     res.status(201).json(sub);
@@ -338,6 +366,10 @@ router.delete(
       }
       await db.query('DELETE FROM subscription_lines WHERE id = $1 AND subscription_id = $2', [lineId, id]);
       await db.query('UPDATE subscriptions SET updated_at = NOW() WHERE id = $1', [id]);
+      await logActivity(db, req.user, {
+        entity: 'subscription', entityId: id, label: s.number, action: 'line_removed', subscriptionId: id,
+        summary: `Removed ${line.productName || 'a product'} from ${s.number}`,
+      });
       return getSubscription(db, id, req.user);
     });
     res.json(sub);

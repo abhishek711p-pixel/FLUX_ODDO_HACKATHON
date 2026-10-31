@@ -18,6 +18,7 @@ const PATHS = {
   send: 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z',
   play: 'M6 4l14 8-14 8V4z',
   wallet: 'M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7zM3 7l3-4h11v4M16 13h2',
+  history: 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 3',
   bell: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4',
   tag: 'M20 12l-8 8-9-9V3h8l9 9zM7.5 7.5h.01',
   plus: 'M12 5v14M5 12h14',

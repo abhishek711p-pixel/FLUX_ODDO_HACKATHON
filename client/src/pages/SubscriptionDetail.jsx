@@ -1,3 +1,4 @@
+import ActivityHistory from '../components/ActivityHistory.jsx';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCrumb } from '../context/CrumbContext.jsx';
@@ -275,6 +276,14 @@ export default function SubscriptionDetail() {
           </table></div>
         )}
       </div>
+
+      {/* Audit trail: everything that happened to this subscription, its invoices and payments */}
+      {internal && (
+        <div className="mt-5">
+          <ActivityHistory filter={{ subscriptionId: sub.id }} title="History"
+            version={`${sub.status}|${sub.expiryDate}|${sub.lines.length}|${sub.invoices.length}|${sub.nextInvoiceDate}`} />
+        </div>
+      )}
 
       {/* Confirmation */}
       <Modal open={!!asking} title={asking ? ACTIONS[asking].label : ''} onClose={() => setAsking(null)}

@@ -1,3 +1,4 @@
+import ActivityHistory from '../components/ActivityHistory.jsx';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCrumb } from '../context/CrumbContext.jsx';
@@ -141,6 +142,13 @@ export default function InvoiceDetail() {
           </table></div>
         )}
       </div>
+
+      {user.role !== 'customer' && (
+        <div className="mt-5">
+          <ActivityHistory filter={{ invoiceId: inv.id }} title="History"
+            version={`${inv.status}|${inv.totals.paid}|${inv.sentAt}|${inv.reminderSentAt}`} />
+        </div>
+      )}
 
       <RecordPayment invoice={inv} open={paying} onClose={() => setPaying(false)}
         onSaved={(updated) => {

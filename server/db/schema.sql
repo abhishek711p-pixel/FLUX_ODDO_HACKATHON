@@ -228,3 +228,24 @@ CREATE TABLE payments (
 );
 CREATE INDEX payments_invoice_idx ON payments (invoice_id);
 CREATE INDEX payments_date_idx ON payments (payment_date);
+
+-- ---------- Activity log (audit trail) ----------
+-- One row per important change: who did it, what, when, and the old/new values.
+-- Rows are only ever inserted, never updated or deleted by the app.
+CREATE TABLE activity_log (
+  id              SERIAL PRIMARY KEY,
+  user_id         INT REFERENCES users(id),            -- NULL = the system (automatic billing)
+  entity          VARCHAR(30) NOT NULL,                -- subscription, invoice, payment, plan, discount, product, tax, user, billing
+  entity_id       INT,
+  entity_label    VARCHAR(80),                         -- e.g. SUB/00012, INV/2026/00031, plan name
+  action          VARCHAR(40) NOT NULL,                -- created, updated, status_changed, sent, reminded, cancelled, ...
+  summary         TEXT NOT NULL,                       -- one readable sentence
+  details         JSONB,                               -- e.g. { "from": "draft", "to": "quotation" }
+  subscription_id INT,                                 -- so a subscription's full history is one query
+  invoice_id      INT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX activity_created_idx ON activity_log (created_at DESC);
+CREATE INDEX activity_subscription_idx ON activity_log (subscription_id, created_at DESC);
+CREATE INDEX activity_invoice_idx ON activity_log (invoice_id, created_at DESC);
+CREATE INDEX activity_entity_idx ON activity_log (entity, entity_id);

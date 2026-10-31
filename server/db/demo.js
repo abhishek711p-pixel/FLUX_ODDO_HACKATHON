@@ -227,6 +227,51 @@ async function run() {
         [part.map((r) => r[0]), part.map((r) => r[1])]
       );
     }
+    // Activity log (audit trail) for the history above, so every subscription and invoice shows its timeline
+    console.log('Writing activity log...');
+    await client.query(`
+      INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, subscription_id, created_at)
+      SELECT s.created_by, 'subscription', s.id, s.number, 'created', 'Created subscription ' || s.number || ' (draft) for ' || c.name, s.id, LEAST(s.created_at, NOW() - INTERVAL '8 hours')
+      FROM subscriptions s JOIN users c ON c.id = s.customer_id`);
+    await client.query(`
+      INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, details, subscription_id, created_at)
+      SELECT s.created_by, 'subscription', s.id, s.number, 'activate', 'Activated ' || s.number || ': confirmed → active',
+             '{"from":"confirmed","to":"active"}'::jsonb, s.id, LEAST(GREATEST(s.start_date + TIME '10:00', s.created_at + INTERVAL '1 minute'), NOW() - INTERVAL '7 hours',
+                   COALESCE((SELECT MIN(created_at) FROM invoices WHERE subscription_id = s.id) - INTERVAL '1 minute', 'infinity'))
+      FROM subscriptions s WHERE s.status IN ('active', 'paused', 'closed')`);
+    await client.query(`
+      INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, details, subscription_id, created_at)
+      SELECT s.created_by, 'subscription', s.id, s.number, CASE s.status WHEN 'paused' THEN 'pause' ELSE 'close' END,
+             CASE s.status WHEN 'paused' THEN 'Paused ' ELSE 'Closed ' END || s.number || ': active → ' || s.status,
+             jsonb_build_object('from', 'active', 'to', s.status), s.id, LEAST(GREATEST(s.updated_at, s.start_date + TIME '11:00'), NOW() - INTERVAL '2 hours' - (s.id % 240) * INTERVAL '1 minute')
+      FROM subscriptions s WHERE s.status IN ('paused', 'closed')`);
+    await client.query(`
+      INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, details, subscription_id, invoice_id, created_at)
+      SELECT NULL, 'invoice', i.id, i.number, 'created',
+             'Created invoice ' || i.number || ' for ' || s.number || ', period ' || i.period_start || ' to ' || i.period_end || ' (automatic billing)',
+             jsonb_build_object('total', i.total), i.subscription_id, i.id, LEAST(i.created_at, NOW() - INTERVAL '6 hours')
+      FROM invoices i JOIN subscriptions s ON s.id = i.subscription_id`);
+    await client.query(`
+      INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, subscription_id, invoice_id, created_at)
+      SELECT $1, 'invoice', id, number, 'sent', 'Sent invoice ' || number || ' to the customer by email', subscription_id, id, LEAST(sent_at, NOW() - INTERVAL '5 hours')
+      FROM invoices WHERE sent_at IS NOT NULL`, [staffId]);
+    await client.query(`
+      INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, subscription_id, invoice_id, created_at)
+      SELECT $1, 'invoice', id, number, 'reminded', 'Payment reminder sent for ' || number, subscription_id, id, LEAST(reminder_sent_at, NOW() - INTERVAL '3 hours')
+      FROM invoices WHERE reminder_sent_at IS NOT NULL`, [staffId]);
+    await client.query(`
+      INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, details, subscription_id, invoice_id, created_at)
+      SELECT $1, 'invoice', id, number, 'cancelled', 'Cancelled invoice ' || number || '. Its period goes back into the billing queue',
+             '{"to":"cancelled"}'::jsonb, subscription_id, id, LEAST(created_at + INTERVAL '1 day', NOW() - INTERVAL '2 hours')
+      FROM invoices WHERE status = 'cancelled'`, [staffId]);
+    await client.query(`
+      INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, details, subscription_id, invoice_id, created_at)
+      SELECT p.created_by, 'payment', p.id, i.number, 'recorded',
+             'Recorded ₹' || to_char(p.amount, 'FM99,99,99,990.00') || ' by ' ||
+               CASE p.method WHEN 'upi' THEN 'UPI' WHEN 'bank_transfer' THEN 'bank transfer' ELSE p.method END || ' on ' || i.number,
+             jsonb_build_object('amount', p.amount, 'method', p.method), i.subscription_id, i.id, LEAST(p.payment_date + TIME '12:00', NOW() - INTERVAL '4 hours')
+      FROM payments p JOIN invoices i ON i.id = p.invoice_id`);
+
     // Number sequences continue after the demo data
     await client.query(`SELECT setval('subscription_number_seq', $1)`, [SUBSCRIPTIONS]);
     await client.query(`SELECT setval('invoice_number_seq', $1)`, [Math.max(1, invoiceIds.length)]);

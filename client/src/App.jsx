@@ -20,6 +20,7 @@ import InvoiceDetail from './pages/InvoiceDetail.jsx';
 import InvoicePrint from './pages/InvoicePrint.jsx';
 import Payments from './pages/Payments.jsx';
 import Discounts from './pages/Discounts.jsx';
+import ActivityLog from './pages/ActivityLog.jsx';
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/taxes" element={<Taxes />} />
             <Route path="/discounts" element={<Discounts />} />
             <Route path="/templates" element={<Templates />} />
+            <Route path="/activity" element={<ActivityLog />} />
             <Route path="/subscriptions/new" element={<SubscriptionForm />} />
             <Route path="/subscriptions/:id/edit" element={<SubscriptionForm />} />
           </Route>

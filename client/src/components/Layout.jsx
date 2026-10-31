@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { NAV_ITEMS } from '../config/nav.js';
-import { ROLE_LABELS } from '../utils/format.js';
 import Icon from './Icon.jsx';
 import { CrumbProvider, useCrumbValue } from '../context/CrumbContext.jsx';
 
@@ -144,9 +143,6 @@ function LayoutFrame() {
             {!desktopOpen && <span className="hidden border-r border-slate-200 pr-4 lg:block"><Logo /></span>}
             <Breadcrumb items={items} />
           </div>
-          <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
-            {ROLE_LABELS[user.role]}
-          </span>
         </header>
         <main className="flex-1 px-4 py-6 lg:px-8">
           <Outlet />

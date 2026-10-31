@@ -10,6 +10,12 @@ export function formatDate(value) {
   return new Date(y, m - 1, d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// ISO timestamp -> 31 Oct 2026, 3:45 pm
+export function formatDateTime(value) {
+  if (!value) return '-';
+  return new Date(value).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
 // Today as 'YYYY-MM-DD' in local time
 export function todayISO() {
   const d = new Date();

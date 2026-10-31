@@ -55,6 +55,7 @@ SubFlow runs the whole cycle in one place, for any company: product, plan, quota
 - Record the rest by bank transfer → invoice turns **Paid** on its own.
 - **Invoices → Overdue** tab → open one → "Overdue by N days" → **Send reminder**.
 - **Payments** page: totals by method, date filters.
+- Scroll down on the invoice: **History** shows created, sent, reminded and each payment with who did it. **Settings → Activity log** shows every change in the system.
 
 ## 7. The finance lead, end of month (40 s)
 - **Dashboard**: active subscriptions, monthly recurring revenue, still owed, overdue; revenue collected and invoiced
@@ -80,4 +81,5 @@ skipped billing, and it stays fast at scale."
 | Several discounts qualify? | The customer gets the single best one, before GST, one use per invoice. |
 | Is the demo data static JSON? | No. A seed script writes into our PostgreSQL database; every screen reads live through our API. `npm run db:setup` gives a clean small dataset. |
 | Why is it fast? | Server-side pagination, indexes on status, customer and dates, and the dashboard is a handful of aggregate SQL queries. |
+| Who changed what? Is there an audit trail? | Yes. Every status change, price edit, invoice action and payment goes into an append only `activity_log` table inside the same transaction, with who, when and old → new values. Open any subscription: the History panel shows its full timeline. Settings → Activity log shows everything, with filters. |
 | Can staff give discounts? | No. Staff can view rules; creating or changing them returns 403 from the server. |

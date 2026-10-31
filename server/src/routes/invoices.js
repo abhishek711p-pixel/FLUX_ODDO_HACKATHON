@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { config } from '../config.js';
 import { z } from 'zod';
 import { query, withTransaction } from '../db.js';
+import { logActivity } from '../utils/activity.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { HttpError, asyncHandler, getPagination, isId, toCamel, validate } from '../utils/http.js';
 import { dateSchema } from '../utils/validation.js';
@@ -178,6 +179,10 @@ router.post(
       if (i.status !== 'draft') throw new HttpError(400, `Only draft invoices can be confirmed (this one is ${i.status})`);
       // Nothing to pay (e.g. a 100% discount) means it is paid as soon as it is confirmed
       await db.query(`UPDATE invoices SET status = CASE WHEN total <= amount_paid THEN 'paid' ELSE 'confirmed' END WHERE id = $1`, [id]);
+      await logActivity(db, req.user, {
+        entity: 'invoice', entityId: id, label: i.number, action: 'confirmed', subscriptionId: i.subscription_id, invoiceId: id,
+        summary: `Confirmed invoice ${i.number}: draft → confirmed`, details: { from: 'draft', to: 'confirmed' },
+      });
       return getInvoice(db, id, req.user);
     });
     res.json(inv);
@@ -193,6 +198,12 @@ router.post(
     const r = await query(
       `UPDATE invoices SET status = CASE WHEN total <= amount_paid THEN 'paid' ELSE 'confirmed' END
        WHERE id = ANY($1::int[]) AND status = 'draft' RETURNING id`, [ids]);
+    if (r.rowCount) {
+      await query(
+        `INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, details, subscription_id, invoice_id)
+         SELECT $1, 'invoice', id, number, 'confirmed', 'Confirmed invoice ' || number || ' (bulk confirm)', '{"from":"draft","to":"confirmed"}'::jsonb, subscription_id, id
+         FROM invoices WHERE id = ANY($2::int[])`, [req.user.id, r.rows.map((x) => x.id)]);
+    }
     res.json({ confirmed: r.rowCount });
   })
 );
@@ -212,6 +223,12 @@ router.post(
        RETURNING i.id, i.number, i.due_date, i.total - i.amount_paid AS due, c.name, c.email`,
       [today]
     );
+    if (rows.length) {
+      await query(
+        `INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, subscription_id, invoice_id)
+         SELECT $1, 'invoice', id, number, 'reminded', 'Payment reminder sent for ' || number || ' (remind all overdue)', subscription_id, id
+         FROM invoices WHERE id = ANY($2::int[])`, [req.user.id, rows.map((x) => x.id)]);
+    }
     const base = process.env.CLIENT_URL || 'http://localhost:5173';
     let emailed = 0;
     if (mailEnabled) {
@@ -252,6 +269,10 @@ router.post(
         throw new HttpError(400, 'Only the latest invoice of a subscription can be cancelled, so no billing period is ever skipped. Cancel the newer invoices first.');
       }
       await db.query(`UPDATE invoices SET status = 'cancelled' WHERE id = $1`, [id]);
+      await logActivity(db, req.user, {
+        entity: 'invoice', entityId: id, label: i.number, action: 'cancelled', subscriptionId: i.subscription_id, invoiceId: id,
+        summary: `Cancelled invoice ${i.number} (${i.status} → cancelled). Its period goes back into the billing queue`, details: { from: i.status, to: 'cancelled' },
+      });
 
       // Give back the discount use
       await db.query(
@@ -282,6 +303,10 @@ router.post(
       const i = await lockInvoice(db, id);
       if (!['draft', 'confirmed'].includes(i.status)) throw new HttpError(400, `A ${i.status} invoice cannot be sent`);
       await db.query(`UPDATE invoices SET status = CASE WHEN status = 'draft' AND total <= amount_paid THEN 'paid' WHEN status = 'draft' THEN 'confirmed' ELSE status END, sent_at = NOW() WHERE id = $1`, [id]);
+      await logActivity(db, req.user, {
+        entity: 'invoice', entityId: id, label: i.number, action: 'sent', subscriptionId: i.subscription_id, invoiceId: id,
+        summary: `Sent invoice ${i.number} to the customer by email`,
+      });
       return getInvoice(db, id, req.user);
     });
     const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/invoices/${inv.id}`;
@@ -304,6 +329,10 @@ router.post(
     const before = await getInvoice({ query }, id, req.user);
     if (!before.isOverdue) throw new HttpError(400, 'Reminders are only for overdue invoices');
     await query('UPDATE invoices SET reminder_sent_at = NOW() WHERE id = $1', [id]);
+    await logActivity(null, req.user, {
+      entity: 'invoice', entityId: id, label: before.number, action: 'reminded', subscriptionId: before.subscription?.id ?? null, invoiceId: id,
+      summary: `Payment reminder sent for ${before.number} (${before.daysOverdue} days overdue)`,
+    });
     const inv = await getInvoice({ query }, id, req.user);
     const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/invoices/${inv.id}`;
     const mail = await sendMail({
@@ -326,7 +355,13 @@ router.post(
     const { date } = validate(z.object({ date: dateSchema('Billing date').optional() }), req.body || {});
     const today = todayISO();
     if (date && date > today) throw new HttpError(400, 'Billing cannot be run for a future date');
-    res.json(await runBilling({ date: date || today, userId: req.user.id }));
+    const r = await runBilling({ date: date || today, userId: req.user.id });
+    await logActivity(null, req.user, {
+      entity: 'billing', action: 'billing_run',
+      summary: `Ran billing for ${r.date}: ${r.created} invoice${r.created === 1 ? '' : 's'} created, ${r.closed} subscription${r.closed === 1 ? '' : 's'} closed`,
+      details: { created: r.created, closed: r.closed, errors: r.errors.length },
+    });
+    res.json(r);
   })
 );
 

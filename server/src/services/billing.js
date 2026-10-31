@@ -7,6 +7,7 @@
 //  - Each invoice moves next_invoice_date forward by exactly one period, and the billing run
 //    loops until the subscription is up to date, so missed periods are caught up one by one.
 import { pool, withTransaction } from '../db.js';
+import { logActivity } from '../utils/activity.js';
 import { HttpError } from '../utils/http.js';
 import { addDays, addPeriod, dayOf, round2, todayISO } from '../utils/periods.js';
 
@@ -155,6 +156,7 @@ export async function invoiceNextPeriod(db, subscriptionId, { invoiceDate = toda
   const dueDate = addDays(invoiceDate, s.payment_terms_days);
 
   let invoiceId;
+  let invoiceNumber;
   try {
     await db.query('SAVEPOINT create_invoice');
     invoiceId = (await db.query(
@@ -162,9 +164,11 @@ export async function invoiceNextPeriod(db, subscriptionId, { invoiceDate = toda
                              untaxed_amount, discount_amount, tax_amount, total)
        VALUES ('INV/' || EXTRACT(YEAR FROM $1::date) || '/' || LPAD(nextval('invoice_number_seq')::text, 5, '0'),
                $2, $3, 'draft', $1, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING id`,
+       RETURNING id, number`,
       [invoiceDate, s.id, s.customer_id, dueDate, periodStart, periodEnd, untaxed, discount, tax, total]
-    )).rows[0].id;
+    )).rows[0];
+    invoiceNumber = invoiceId.number;
+    invoiceId = invoiceId.id;
     await db.query('RELEASE SAVEPOINT create_invoice');
   } catch (err) {
     if (err.code === '23505') {
@@ -186,6 +190,12 @@ export async function invoiceNextPeriod(db, subscriptionId, { invoiceDate = toda
     await db.query('INSERT INTO invoice_discounts (invoice_id, discount_id, name, amount) VALUES ($1, $2, $3, $4)',
       [invoiceId, best.rule.id, best.rule.name, discount]);
   }
+
+  await logActivity(db, userId, {
+    entity: 'invoice', entityId: invoiceId, label: invoiceNumber, action: 'created', subscriptionId: s.id, invoiceId,
+    summary: `Created invoice ${invoiceNumber} for ${s.number}, period ${periodStart} to ${periodEnd}${userId ? '' : ' (automatic billing)'}`,
+    details: { total, discount, tax },
+  });
 
   // Move to the next period
   await db.query(
@@ -213,6 +223,13 @@ export async function runBilling({ date = todayISO(), userId = null } = {}) {
     [date]
   );
   result.closed += closed.rowCount;
+  if (closed.rowCount) {
+    await pool.query(
+      `INSERT INTO activity_log (user_id, entity, entity_id, entity_label, action, summary, details, subscription_id)
+       SELECT $1, 'subscription', id, number, 'close', 'Closed ' || number || ' automatically: expired and the plan closes on its own',
+              '{"from":"active","to":"closed"}'::jsonb, id
+       FROM subscriptions WHERE id = ANY($2::int[])`, [userId, closed.rows.map((x) => x.id)]);
+  }
 
   // 2) Everything due
   const due = await pool.query(
@@ -252,6 +269,13 @@ export function startAutoBilling() {
   const tick = async () => {
     try {
       const r = await runBilling();
+      if (r.created || r.closed) {
+        await logActivity(null, null, {
+          entity: 'billing', action: 'billing_run',
+          summary: `Automatic billing for ${r.date}: ${r.created} invoices created, ${r.closed} subscriptions closed`,
+          details: { created: r.created, closed: r.closed, errors: r.errors.length },
+        }).catch(() => {});
+      }
       if (r.created || r.closed || r.errors.length) {
         console.log(`[auto billing ${r.date}] ${r.created} invoices created, ${r.closed} subscriptions closed, ${r.errors.length} errors`);
       }

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { query } from '../db.js';
+import { logActivity, diff } from '../utils/activity.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { HttpError, isId, asyncHandler, toCamel, validate } from '../utils/http.js';
 
@@ -37,6 +38,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const data = validate(taxSchema, req.body);
     const { rows } = await query(`INSERT INTO taxes (name, rate) VALUES ($1, $2) RETURNING ${FIELDS}`, [data.name, data.rate]);
+    await logActivity(null, req.user, { entity: 'tax', entityId: rows[0].id, label: data.name, action: 'created', summary: `Created tax ${data.name} at ${data.rate}%` });
     res.status(201).json(toCamel(rows[0]));
   })
 );
@@ -46,11 +48,19 @@ router.put(
   requireRole('admin'),
   asyncHandler(async (req, res) => {
     const data = validate(taxSchema, req.body);
+    const before = (await query('SELECT name, rate, active FROM taxes WHERE id = $1', [req.params.id])).rows[0];
     const { rows } = await query(
       `UPDATE taxes SET name = $1, rate = $2, active = COALESCE($3, active) WHERE id = $4 RETURNING ${FIELDS}`,
       [data.name, data.rate, data.active ?? null, req.params.id]
     );
     if (!rows[0]) throw new HttpError(404, 'Tax not found');
+    const changes = diff(before, rows[0], ['name', 'rate', 'active']);
+    if (Object.keys(changes).length) {
+      await logActivity(null, req.user, {
+        entity: 'tax', entityId: rows[0].id, label: rows[0].name, action: 'updated', details: changes,
+        summary: `Changed tax ${rows[0].name}: ` + Object.entries(changes).map(([k, v]) => `${k} ${v.from} → ${v.to}`).join(', '),
+      });
+    }
     res.json(toCamel(rows[0]));
   })
 );

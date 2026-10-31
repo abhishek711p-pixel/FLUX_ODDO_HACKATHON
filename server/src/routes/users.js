@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { z } from 'zod';
 import { query } from '../db.js';
+import { logActivity, diff } from '../utils/activity.js';
 import { requireAuth, requireRole, USER_FIELDS } from '../middleware/auth.js';
 import { HttpError, isId, asyncHandler, getPagination, toCamel, validate } from '../utils/http.js';
 import { emailSchema, nameSchema, optionalText, passwordSchema, phoneSchema } from '../utils/validation.js';
@@ -71,6 +72,7 @@ router.post(
        VALUES ($1, $2, $3, $4, $6, $5) RETURNING ${USER_FIELDS}`,
       [data.name, data.email, hash, data.role, data.phone, config.company.name]
     );
+    await logActivity(null, req.user, { entity: 'user', entityId: rows[0].id, label: data.name, action: 'created', summary: `Added team member ${data.name} as ${data.role}` });
     res.status(201).json(toCamel(rows[0]));
   })
 );
@@ -88,6 +90,10 @@ router.patch(
 
     const { rows } = await query(`UPDATE users SET active = $1 WHERE id = $2 RETURNING ${USER_FIELDS}`, [active, id]);
     if (!rows[0]) throw new HttpError(404, 'User not found');
+    await logActivity(null, req.user, {
+      entity: 'user', entityId: id, label: rows[0].name, action: active ? 'enabled' : 'disabled',
+      summary: `${active ? 'Enabled' : 'Disabled'} the account of ${rows[0].name} (${rows[0].role})`,
+    });
     res.json(toCamel(rows[0]));
   })
 );
@@ -124,6 +130,7 @@ router.post(
       [data.name, data.email, hash, data.company, data.phone]
     );
     const user = toCamel(rows[0]);
+    await logActivity(null, req.user, { entity: 'user', entityId: user.id, label: user.name, action: 'created', summary: `Added customer ${user.name}${data.company ? ` (${data.company})` : ''} and sent an invite` });
     const devResetLink = await issueResetLink({ query }, user, { purpose: 'invite' });
     res.status(201).json({ user, ...(devResetLink ? { devResetLink } : {}) });
   })
